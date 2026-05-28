@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanamaru-fuda-v5';
+const CACHE_NAME = 'hanamaru-fuda-v6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -19,13 +19,14 @@ function patchIndex(html) {
     .consume-top { flex: 0 0 auto; min-height: 40px; padding: 8px 10px; border-radius: 16px; background: #fff; border: 1px solid var(--line); color: var(--ink); font-weight: 950; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; }
     .list-card, #dueTasks, #anytimeVisible, #anytimeFolded, #doneTasks, .task-list { width: 100%; }
     .task { width: 100%; }
+    #dueTasks:not(:empty) + #anytimeVisible:not(:empty) { margin-top: 12px; }
     .task:has(.task-due) { border-color: rgba(219, 93, 130, .62); background: linear-gradient(180deg, #fff4f7, #fff8ed); }
     .task:has(.task-due) .task-due { color: #c14667; }
     .task.recommended:not(.done) { border-color: rgba(247, 201, 72, .78); background: linear-gradient(180deg, #fffbe8, #fff8ed); }
     @media (max-width: 390px) { .consume-top { padding: 8px 8px; } }
   `;
 
-  if (!patched.includes('.task:has(.task-due)')) {
+  if (!patched.includes('#dueTasks:not(:empty) + #anytimeVisible:not(:empty)')) {
     patched = patched.replace('</style>', `${patchCss}\n  </style>`);
   }
 
