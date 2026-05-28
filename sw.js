@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanamaru-fuda-v7';
+const CACHE_NAME = 'hanamaru-fuda-v8';
 const APP_SHELL = [
   './',
   './index.html',
@@ -31,23 +31,86 @@ function patchIndex(html) {
     "$('convertBtn').textContent = count ? `変換 ${count}` : '変換';"
   );
 
+  patched = patched.replace(
+    'createdAt: task.createdAt || new Date().toISOString()\n      };',
+    'createdAt: task.createdAt || new Date().toISOString(),\n        sortOrder: Math.floor(Number(task.sortOrder) || 0)\n      };'
+  );
+
+  patched = patched.replace(
+    `function sortTasks(tasks, done = false) {
+      return [...tasks].sort((a, b) => {
+        if (!done && a.dueKind === 'dated' && b.dueKind === 'dated') return String(a.dueDate).localeCompare(String(b.dueDate));
+        if (done) return String(b.completedAt || '').localeCompare(String(a.completedAt || ''));
+        return String(a.createdAt).localeCompare(String(b.createdAt));
+      });
+    }`,
+    `function sortTasks(tasks, done = false) {
+      return [...tasks].sort((a, b) => {
+        if (!done) {
+          const manual = (Number(b.sortOrder) || 0) - (Number(a.sortOrder) || 0);
+          if (manual !== 0) return manual;
+        }
+        if (!done && a.dueKind === 'dated' && b.dueKind === 'dated') return String(a.dueDate).localeCompare(String(b.dueDate));
+        if (done) return String(b.completedAt || '').localeCompare(String(a.completedAt || ''));
+        return String(a.createdAt).localeCompare(String(b.createdAt));
+      });
+    }`
+  );
+
+  patched = patched.replace(
+    `const edit = document.createElement('button');
+      edit.type = 'button';`,
+    `const top = document.createElement('button');
+      top.type = 'button';
+      top.className = 'btn small sort-top';
+      top.textContent = '↑';
+      top.setAttribute('aria-label', '一番上へ');
+      top.addEventListener('click', () => moveTaskTop(task.id));
+      const edit = document.createElement('button');
+      edit.type = 'button';`
+  );
+
+  patched = patched.replace('menu.append(edit, del);', 'menu.append(top, edit, del);');
+
+  patched = patched.replace(
+    `function deleteTask(id) {
+      const task = state.tasks.find(t => t.id === id);`,
+    `function moveTaskTop(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+      task.sortOrder = Date.now();
+      save();
+      render();
+      toast('この札を上へ送った。');
+    }
+
+    function deleteTask(id) {
+      const task = state.tasks.find(t => t.id === id);`
+  );
+
+  patched = patched.replace(
+    'data.createdAt = state.tasks[index].createdAt;\n        data.completed = state.tasks[index].completed;',
+    'data.createdAt = state.tasks[index].createdAt;\n        data.sortOrder = state.tasks[index].sortOrder || 0;\n        data.completed = state.tasks[index].completed;'
+  );
+
   const patchCss = `
     .consume-top { flex: 0 0 auto; min-height: 40px; padding: 8px 10px; border-radius: 16px; background: #fff; border: 1px solid var(--line); color: var(--ink); font-weight: 950; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; }
     .convert-top { flex: 0 0 auto; min-height: 40px; padding: 8px 13px; border-radius: 16px; background: var(--accent); color: #fff; font-weight: 950; white-space: nowrap; box-shadow: 0 8px 20px rgba(219, 93, 130, .22); }
     .convert-top:disabled { opacity: .62; }
     .icon-tool { min-width: 44px; font-size: 21px; line-height: 1; padding: 5px 8px; }
     .bottom-add { font-size: 26px; font-weight: 950; min-height: 54px; }
-    .bottom-ai { min-width: 132px; font-size: 24px; font-weight: 950; min-height: 54px; background: #fff; }
+    .bottom-ai { min-width: 74px; font-size: 21px; font-weight: 950; min-height: 54px; background: #fff; }
+    .sort-top { min-width: 36px !important; font-size: 17px; padding-left: 8px !important; padding-right: 8px !important; }
     .list-card, #dueTasks, #anytimeVisible, #anytimeFolded, #doneTasks, .task-list { width: 100%; }
     .task { width: 100%; }
     #dueTasks:not(:empty) + #anytimeVisible:not(:empty) { margin-top: 12px; }
     .task:has(.task-due) { border-color: rgba(219, 93, 130, .62); background: linear-gradient(180deg, #fff4f7, #fff8ed); }
     .task:has(.task-due) .task-due { color: #c14667; }
     .task.recommended:not(.done) { border-color: rgba(247, 201, 72, .78); background: linear-gradient(180deg, #fffbe8, #fff8ed); }
-    @media (max-width: 390px) { .consume-top { padding: 8px 8px; } .convert-top { padding: 8px 10px; } .bottom-ai { min-width: 126px; } }
+    @media (max-width: 390px) { .consume-top { padding: 8px 8px; } .convert-top { padding: 8px 10px; } .bottom-ai { min-width: 70px; } }
   `;
 
-  if (!patched.includes('.convert-top {')) {
+  if (!patched.includes('.sort-top {')) {
     patched = patched.replace('</style>', `${patchCss}\n  </style>`);
   }
 
