@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanamaru-fuda-v4';
+const CACHE_NAME = 'hanamaru-fuda-v5';
 const APP_SHELL = [
   './',
   './index.html',
@@ -9,11 +9,26 @@ const APP_SHELL = [
 
 function patchIndex(html) {
   if (!html || !html.includes('<html')) return html;
-  if (html.includes('id="consumeLink"')) return html;
   let patched = html;
-  patched = patched.replace('<button class="add-top" id="newTaskBtn" type="button">札を貼る</button>', '<a class="consume-top" id="consumeLink" href="consume.html">消費</a><button class="add-top" id="newTaskBtn" type="button">札を貼る</button>');
-  patched = patched.replace('.add-top {', '.consume-top { flex: 0 0 auto; min-height: 40px; padding: 8px 10px; border-radius: 16px; background: #fff; border: 1px solid var(--line); color: var(--ink); font-weight: 950; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; }\n\n    .add-top {');
-  patched = patched.replace('.add-top { padding: 8px 10px; }', '.consume-top { padding: 8px 8px; }\n      .add-top { padding: 8px 10px; }');
+
+  if (!patched.includes('id="consumeLink"')) {
+    patched = patched.replace('<button class="add-top" id="newTaskBtn" type="button">札を貼る</button>', '<a class="consume-top" id="consumeLink" href="consume.html">消費</a><button class="add-top" id="newTaskBtn" type="button">札を貼る</button>');
+  }
+
+  const patchCss = `
+    .consume-top { flex: 0 0 auto; min-height: 40px; padding: 8px 10px; border-radius: 16px; background: #fff; border: 1px solid var(--line); color: var(--ink); font-weight: 950; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; }
+    .list-card, #dueTasks, #anytimeVisible, #anytimeFolded, #doneTasks, .task-list { width: 100%; }
+    .task { width: 100%; }
+    .task:has(.task-due) { border-color: rgba(219, 93, 130, .62); background: linear-gradient(180deg, #fff4f7, #fff8ed); }
+    .task:has(.task-due) .task-due { color: #c14667; }
+    .task.recommended:not(.done) { border-color: rgba(247, 201, 72, .78); background: linear-gradient(180deg, #fffbe8, #fff8ed); }
+    @media (max-width: 390px) { .consume-top { padding: 8px 8px; } }
+  `;
+
+  if (!patched.includes('.task:has(.task-due)')) {
+    patched = patched.replace('</style>', `${patchCss}\n  </style>`);
+  }
+
   return patched;
 }
 
