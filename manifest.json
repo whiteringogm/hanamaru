@@ -1,0 +1,19 @@
+{
+  "name": "花丸札",
+  "short_name": "花丸札",
+  "description": "頭の中の札を剥がして、終わったら花丸に変換する小さい道具。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fff7ef",
+  "theme_color": "#f7b6c8",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
