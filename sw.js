@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanamaru-fuda-v6';
+const CACHE_NAME = 'hanamaru-fuda-v7';
 const APP_SHELL = [
   './',
   './index.html',
@@ -11,22 +11,43 @@ function patchIndex(html) {
   if (!html || !html.includes('<html')) return html;
   let patched = html;
 
-  if (!patched.includes('id="consumeLink"')) {
-    patched = patched.replace('<button class="add-top" id="newTaskBtn" type="button">札を貼る</button>', '<a class="consume-top" id="consumeLink" href="consume.html">消費</a><button class="add-top" id="newTaskBtn" type="button">札を貼る</button>');
-  }
+  patched = patched.replace(
+    '<button class="add-top" id="newTaskBtn" type="button">札を貼る</button>',
+    '<a class="consume-top" id="consumeLink" href="consume.html">消費</a><button class="convert-top" id="convertBtn" type="button">変換</button>'
+  );
+
+  patched = patched.replace(
+    '<button class="tool-btn" id="refreshReco" type="button">おすすめ</button>\n          <button class="tool-btn" id="openAiTools" type="button">AI</button>\n          <button class="tool-btn" id="openHistory" type="button">履歴</button>',
+    '<button class="tool-btn icon-tool" id="refreshReco" type="button" aria-label="おすすめ更新">🔄</button>\n          <button class="tool-btn icon-tool" id="undoBtn" type="button" aria-label="Undo" disabled>↩️</button>\n          <button class="tool-btn" id="openHistory" type="button">履歴</button>'
+  );
+
+  patched = patched.replace(
+    '<button class="btn gold" id="convertBtn" type="button">花丸スタンプ変換</button>\n      <button class="btn" id="undoBtn" type="button" disabled>Undo</button>',
+    '<button class="btn gold bottom-add" id="newTaskBtn" type="button">札を貼る</button>\n      <button class="btn bottom-ai" id="openAiTools" type="button">AI</button>'
+  );
+
+  patched = patched.replace(
+    "$('convertBtn').textContent = count ? `花丸スタンプ変換（${count}）` : '花丸スタンプ変換';",
+    "$('convertBtn').textContent = count ? `変換 ${count}` : '変換';"
+  );
 
   const patchCss = `
     .consume-top { flex: 0 0 auto; min-height: 40px; padding: 8px 10px; border-radius: 16px; background: #fff; border: 1px solid var(--line); color: var(--ink); font-weight: 950; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; }
+    .convert-top { flex: 0 0 auto; min-height: 40px; padding: 8px 13px; border-radius: 16px; background: var(--accent); color: #fff; font-weight: 950; white-space: nowrap; box-shadow: 0 8px 20px rgba(219, 93, 130, .22); }
+    .convert-top:disabled { opacity: .62; }
+    .icon-tool { min-width: 44px; font-size: 21px; line-height: 1; padding: 5px 8px; }
+    .bottom-add { font-size: 26px; font-weight: 950; min-height: 54px; }
+    .bottom-ai { min-width: 132px; font-size: 24px; font-weight: 950; min-height: 54px; background: #fff; }
     .list-card, #dueTasks, #anytimeVisible, #anytimeFolded, #doneTasks, .task-list { width: 100%; }
     .task { width: 100%; }
     #dueTasks:not(:empty) + #anytimeVisible:not(:empty) { margin-top: 12px; }
     .task:has(.task-due) { border-color: rgba(219, 93, 130, .62); background: linear-gradient(180deg, #fff4f7, #fff8ed); }
     .task:has(.task-due) .task-due { color: #c14667; }
     .task.recommended:not(.done) { border-color: rgba(247, 201, 72, .78); background: linear-gradient(180deg, #fffbe8, #fff8ed); }
-    @media (max-width: 390px) { .consume-top { padding: 8px 8px; } }
+    @media (max-width: 390px) { .consume-top { padding: 8px 8px; } .convert-top { padding: 8px 10px; } .bottom-ai { min-width: 126px; } }
   `;
 
-  if (!patched.includes('#dueTasks:not(:empty) + #anytimeVisible:not(:empty)')) {
+  if (!patched.includes('.convert-top {')) {
     patched = patched.replace('</style>', `${patchCss}\n  </style>`);
   }
 
