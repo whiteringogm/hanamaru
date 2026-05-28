@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="花丸札">
+  <rect width="512" height="512" rx="112" fill="#fff7ef"/>
+  <circle cx="256" cy="256" r="150" fill="#ffe2eb" stroke="#e94b70" stroke-width="22"/>
+  <path d="M174 261c30 40 64 62 101 65 45 3 85-25 119-86" fill="none" stroke="#e94b70" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#f7c948">
+    <circle cx="165" cy="151" r="20"/>
+    <circle cx="352" cy="151" r="20"/>
+    <circle cx="142" cy="352" r="18"/>
+    <circle cx="377" cy="354" r="18"/>
+  </g>
+</svg>
