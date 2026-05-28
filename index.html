@@ -12,7 +12,6 @@
       color-scheme: light;
       --bg: #fff7ef;
       --paper: #fffdf8;
-      --paper-strong: #fff8d8;
       --ink: #3d2b2d;
       --muted: #806f71;
       --line: #ead7c9;
@@ -42,21 +41,13 @@
       -webkit-text-size-adjust: 100%;
     }
 
-    button, input, select, textarea {
-      font: inherit;
-      color: inherit;
-    }
-
-    button {
-      border: 0;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
     .app {
       width: min(940px, 100%);
       margin: 0 auto;
-      padding: 14px 12px calc(28px + var(--safe-bottom));
+      padding: 14px 12px calc(86px + var(--safe-bottom));
     }
 
     header {
@@ -70,12 +61,15 @@
       border-bottom: 1px solid rgba(234, 215, 201, .74);
     }
 
-    .title-row {
+    .title-row, .section-title, .row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
     }
+
+    .title-row, .section-title { justify-content: space-between; }
+    .row.wrap { flex-wrap: wrap; }
+    .grow { flex: 1 1 auto; min-width: 0; }
 
     h1 {
       margin: 0;
@@ -85,6 +79,9 @@
       align-items: center;
       gap: 8px;
     }
+
+    h2 { margin: 0; font-size: 17px; }
+    h3 { margin: 12px 0 8px; font-size: 14px; color: var(--muted); }
 
     .stamp-total {
       flex: 0 0 auto;
@@ -98,10 +95,7 @@
       font-weight: 800;
     }
 
-    .stamp-total b {
-      color: var(--accent-strong);
-      font-size: 18px;
-    }
+    .stamp-total b { color: var(--accent-strong); font-size: 18px; }
 
     .tabs {
       display: flex;
@@ -131,56 +125,17 @@
       font-weight: 800;
     }
 
-    .grid {
-      display: grid;
-      gap: 12px;
-    }
-
-    @media (min-width: 760px) {
-      .grid.two { grid-template-columns: 1fr 1fr; align-items: start; }
-    }
-
     .card {
       background: rgba(255, 253, 248, .94);
       border: 1px solid rgba(234, 215, 201, .9);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 14px;
+      margin-bottom: 12px;
     }
 
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    h2 {
-      margin: 0;
-      font-size: 16px;
-    }
-
-    .subtext {
-      margin: 2px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .controls {
-      display: grid;
-      gap: 9px;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .row.wrap { flex-wrap: wrap; }
-
-    .grow { flex: 1 1 auto; min-width: 0; }
+    .subtext { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+    .controls { display: grid; gap: 10px; }
 
     input, select, textarea {
       width: 100%;
@@ -192,15 +147,8 @@
       outline: none;
     }
 
-    textarea {
-      min-height: 116px;
-      resize: vertical;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: rgba(219, 93, 130, .55);
-      box-shadow: 0 0 0 3px rgba(240, 141, 172, .16);
-    }
+    textarea { min-height: 116px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(219, 93, 130, .55); box-shadow: 0 0 0 3px rgba(240, 141, 172, .16); }
 
     .btn {
       min-height: 44px;
@@ -212,63 +160,21 @@
       font-weight: 700;
     }
 
-    .btn.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.gold { background: #ffef9b; border-color: #f3d45a; color: #6d4d00; }
+    .btn.ghost { background: transparent; color: var(--muted); }
+    .btn.danger { color: #a94848; border-color: #f0c1c1; background: #fff6f6; }
+    .btn.small { min-height: 36px; padding: 7px 10px; border-radius: 11px; font-size: 13px; }
+    .btn:disabled { opacity: .52; cursor: default; }
 
-    .btn.gold {
-      background: #ffef9b;
-      border-color: #f3d45a;
-      color: #6d4d00;
-    }
-
-    .btn.ghost {
-      background: transparent;
-      color: var(--muted);
-    }
-
-    .btn.danger {
-      color: #a94848;
-      border-color: #f0c1c1;
-      background: #fff6f6;
-    }
-
-    .btn.small {
-      min-height: 36px;
-      padding: 7px 10px;
-      border-radius: 11px;
-      font-size: 13px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #f6eee7;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .pill.due { background: #ffe2df; color: #a7483f; }
-    .pill.repeat { background: #e8f4e4; color: #4d7b45; }
-    .pill.recommended { background: #fff0b8; color: #815f00; }
-
-    .task-list {
-      display: grid;
-      gap: 9px;
-    }
+    .task-list { display: grid; gap: 9px; }
 
     .task {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: 1fr auto;
       gap: 10px;
       align-items: center;
-      padding: 11px;
+      padding: 12px;
       border-radius: 16px;
       border: 1px solid var(--line);
       background: linear-gradient(180deg, #fffefb, #fff8ed);
@@ -277,59 +183,23 @@
     }
 
     .task:active { transform: scale(.99); }
+    .task.done { background: var(--done); opacity: .72; }
+    .task.recommended:not(.done) { border-color: rgba(247, 201, 72, .95); background: linear-gradient(180deg, #fffbe2, #fff8ed); }
 
-    .task.done {
-      background: var(--done);
-      opacity: .72;
-    }
-
-    .task.recommended:not(.done) {
-      border-color: rgba(247, 201, 72, .95);
-      background: linear-gradient(180deg, #fffbe2, #fff8ed);
-    }
-
-    .check {
-      width: 38px;
-      height: 38px;
-      border-radius: 13px;
-      display: grid;
-      place-items: center;
-      background: #fff;
-      border: 1px solid var(--line);
-      font-weight: 900;
-      color: var(--muted);
-    }
-
-    .task.done .check {
-      background: var(--green);
-      border-color: var(--green);
-      color: #fff;
-    }
-
-    .task-main {
-      min-width: 0;
-    }
-
-    .task-title {
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
+    .task-title { font-weight: 850; overflow-wrap: anywhere; }
     .task.done .task-title { text-decoration: line-through; }
+    .task-due { color: #a7483f; font-size: 12px; font-weight: 750; margin-top: 3px; }
+    .task-menu { display: flex; gap: 5px; align-items: center; }
 
-    .meta {
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-      margin-top: 5px;
+    details {
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      padding: 9px 10px;
+      background: rgba(255,255,255,.42);
+      margin-top: 9px;
     }
 
-    .task-menu {
-      display: flex;
-      gap: 5px;
-      align-self: stretch;
-      align-items: center;
-    }
+    summary { cursor: pointer; color: var(--muted); font-weight: 700; }
 
     .empty {
       padding: 18px 12px;
@@ -340,24 +210,57 @@
       background: rgba(255,255,255,.42);
     }
 
-    details {
-      border: 1px dashed var(--line);
-      border-radius: 16px;
-      padding: 9px 10px;
-      background: rgba(255,255,255,.42);
+    .page.hidden, .hidden { display: none !important; }
+
+    .bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 12;
+      padding: 10px 12px calc(12px + var(--safe-bottom));
+      background: rgba(255, 247, 239, .92);
+      border-top: 1px solid rgba(234, 215, 201, .74);
+      backdrop-filter: blur(14px);
     }
 
-    summary {
-      cursor: pointer;
-      color: var(--muted);
-      font-weight: 700;
+    .bottom-inner {
+      width: min(940px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
     }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(51, 36, 38, .35);
+      display: none;
+      padding: 20px 12px calc(20px + var(--safe-bottom));
+      overflow: auto;
+    }
+
+    .modal-backdrop.show { display: block; }
+
+    .modal {
+      width: min(720px, 100%);
+      margin: 0 auto;
+      background: var(--paper);
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: 0 18px 46px rgba(0,0,0,.24);
+    }
+
+    .splitline { height: 1px; background: var(--line); margin: 12px 0; }
 
     .toast {
       position: fixed;
       left: 12px;
       right: 12px;
-      bottom: calc(12px + var(--safe-bottom));
+      bottom: calc(82px + var(--safe-bottom));
       z-index: 30;
       max-width: 560px;
       margin: 0 auto;
@@ -399,72 +302,8 @@
       animation: stampIn .42s cubic-bezier(.15, 1.2, .35, 1) both;
     }
 
-    @keyframes stampIn {
-      from { transform: scale(2.4) rotate(-18deg); opacity: 0; }
-      to { transform: scale(1) rotate(-12deg); opacity: 1; }
-    }
-
-    @keyframes fadeOut {
-      0%, 70% { opacity: 1; }
-      100% { opacity: 0; }
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 20;
-      background: rgba(51, 36, 38, .35);
-      display: none;
-      padding: 20px 12px calc(20px + var(--safe-bottom));
-      overflow: auto;
-    }
-
-    .modal-backdrop.show { display: block; }
-
-    .modal {
-      width: min(680px, 100%);
-      margin: 0 auto;
-      background: var(--paper);
-      border-radius: 20px;
-      padding: 14px;
-      box-shadow: 0 18px 46px rgba(0,0,0,.24);
-    }
-
-    .hidden { display: none !important; }
-
-    .splitline {
-      height: 1px;
-      background: var(--line);
-      margin: 12px 0;
-    }
-
-    .footer-actions {
-      position: sticky;
-      bottom: 0;
-      z-index: 8;
-      margin: 12px -12px calc(-28px - var(--safe-bottom));
-      padding: 10px 12px calc(12px + var(--safe-bottom));
-      background: rgba(255, 247, 239, .92);
-      border-top: 1px solid rgba(234, 215, 201, .74);
-      backdrop-filter: blur(14px);
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .footer-actions .btn { width: 100%; }
-
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      border: 0;
-    }
+    @keyframes stampIn { from { transform: scale(2.4) rotate(-18deg); opacity: 0; } to { transform: scale(1) rotate(-12deg); opacity: 1; } }
+    @keyframes fadeOut { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
   </style>
 </head>
 <body>
@@ -477,62 +316,82 @@
       <div class="tabs" id="categoryTabs" aria-label="カテゴリ"></div>
     </header>
 
-    <main class="grid">
+    <main id="listPage" class="page">
       <section class="card">
         <div class="section-title">
           <div>
-            <h2>札を貼る</h2>
-            <p class="subtext">頭から剥がした札をここに置く。</p>
+            <h2 id="listTitle">札</h2>
+            <p class="subtext">開いたらまず札を見る。貼る作業は別ページ。</p>
           </div>
-          <button class="btn small ghost" id="openAiTools" type="button">AI連携</button>
+          <button class="btn primary" id="newTaskBtn" type="button">＋ 札を貼る</button>
+        </div>
+        <div class="row wrap">
+          <button class="btn small" id="refreshReco" type="button">おすすめ更新</button>
+          <button class="btn small" id="openAiTools" type="button">AI連携</button>
+          <button class="btn small" id="openHistory" type="button">変換履歴</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3 id="dueHeading">期限あり</h3>
+        <div class="task-list" id="dueTasks"></div>
+        <h3 id="anytimeHeading">いつでも</h3>
+        <div class="task-list" id="anytimeVisible"></div>
+        <details id="foldedWrap" class="hidden">
+          <summary id="foldedSummary">残りの札</summary>
+          <div class="task-list" id="anytimeFolded" style="margin-top:9px"></div>
+        </details>
+        <h3 id="doneHeading">完了済み</h3>
+        <div class="task-list" id="doneTasks"></div>
+        <div id="emptyState" class="empty hidden">札なし。脳内に貼りっぱなしのやつを一枚剥がしてよい。</div>
+      </section>
+    </main>
+
+    <main id="editPage" class="page hidden">
+      <section class="card">
+        <div class="section-title">
+          <div>
+            <h2 id="formTitle">札を貼る</h2>
+            <p class="subtext">登録と編集はここで処理する。</p>
+          </div>
+          <button class="btn ghost" id="cancelEdit" type="button">戻る</button>
         </div>
         <form class="controls" id="taskForm">
+          <input id="taskId" type="hidden" />
+          <label>札の名前</label>
           <input id="taskTitle" type="text" placeholder="例：キーケースのお金補充" autocomplete="off" required />
-          <div class="row wrap">
-            <select id="taskKind" class="grow" aria-label="単発か繰り返しか">
-              <option value="single">単発系</option>
-              <option value="repeat">繰り返し系</option>
-            </select>
-            <select id="repeatEvery" class="grow hidden" aria-label="繰り返し周期">
-              <option value="day">毎日</option>
-              <option value="week">毎週</option>
-              <option value="month">毎月</option>
-              <option value="year">毎年</option>
+          <label>カテゴリ</label>
+          <select id="taskCategory"></select>
+          <label>種類</label>
+          <select id="taskKind">
+            <option value="single">単発系</option>
+            <option value="repeat">繰り返し系</option>
+          </select>
+          <div id="repeatFields" class="row wrap hidden">
+            <input id="repeatInterval" class="grow" type="number" min="1" max="999" inputmode="numeric" aria-label="繰り返し間隔" />
+            <select id="repeatEvery" class="grow" aria-label="繰り返し単位">
+              <option value="day">日ごと</option>
+              <option value="week">週ごと</option>
+              <option value="month">月ごと</option>
+              <option value="year">年ごと</option>
             </select>
           </div>
+          <label>期限</label>
           <div class="row wrap">
             <select id="dueKind" class="grow" aria-label="期限">
               <option value="anytime">いつでも</option>
               <option value="dated">期限あり</option>
             </select>
             <input id="dueDate" class="grow hidden" type="date" aria-label="期限日" />
-            <button class="btn primary" type="submit">貼る</button>
           </div>
+          <button class="btn primary" type="submit">保存</button>
         </form>
       </section>
-
-      <section class="card">
-        <div class="section-title">
-          <div>
-            <h2 id="listTitle">札</h2>
-            <p class="subtext">完了タップで下へ移動。おすすめは薄く光るだけ。</p>
-          </div>
-          <button class="btn small" id="refreshReco" type="button">おすすめ更新</button>
-        </div>
-        <div class="task-list" id="dueTasks"></div>
-        <div class="splitline" id="dueSplit"></div>
-        <div class="task-list" id="anytimeVisible"></div>
-        <details id="foldedWrap" class="hidden">
-          <summary id="foldedSummary">残りの札</summary>
-          <div class="task-list" id="anytimeFolded" style="margin-top:9px"></div>
-        </details>
-        <div class="splitline"></div>
-        <div class="task-list" id="doneTasks"></div>
-        <div id="emptyState" class="empty hidden">札なし。脳内に貼りっぱなしのやつを一枚剥がしてよい。</div>
-      </section>
     </main>
+  </div>
 
-    <div class="footer-actions">
+  <div class="bottom-bar" id="bottomBar">
+    <div class="bottom-inner">
       <button class="btn gold" id="convertBtn" type="button">花丸スタンプ変換</button>
       <button class="btn" id="undoBtn" type="button" disabled>Undo</button>
     </div>
@@ -544,31 +403,28 @@
         <h2 id="settingsTitle">設定とバックアップ</h2>
         <button class="btn small ghost" data-close="settingsModal" type="button">閉じる</button>
       </div>
-      <div class="grid two">
-        <section class="controls">
-          <label>カテゴリ</label>
-          <div class="row">
-            <input id="categoryInput" class="grow" type="text" placeholder="例：生活" />
-            <button class="btn" id="addCategory" type="button">追加</button>
-          </div>
-          <div class="row wrap" id="categoryManage"></div>
-          <label>いつでも札の表示数</label>
-          <input id="visibleLimit" type="number" min="1" max="99" inputmode="numeric" />
-          <label>おすすめ数</label>
-          <input id="recommendCount" type="number" min="0" max="20" inputmode="numeric" />
-          <label>日課リセット時刻</label>
-          <input id="resetHour" type="time" />
-          <button class="btn primary" id="saveSettings" type="button">設定保存</button>
-        </section>
-        <section class="controls">
-          <label>JSONバックアップ</label>
-          <button class="btn" id="exportJson" type="button">書き出し</button>
-          <textarea id="jsonBox" placeholder="ここにJSONを貼って読み込み"></textarea>
-          <div class="row">
-            <button class="btn" id="copyJson" type="button">JSONコピー</button>
-            <button class="btn danger" id="importJson" type="button">読み込み</button>
-          </div>
-        </section>
+      <div class="controls">
+        <label>カテゴリ追加</label>
+        <div class="row">
+          <input id="categoryInput" class="grow" type="text" placeholder="例：生活" />
+          <button class="btn" id="addCategory" type="button">追加</button>
+        </div>
+        <div class="row wrap" id="categoryManage"></div>
+        <label>いつでも札の表示数</label>
+        <input id="visibleLimit" type="number" min="1" max="99" inputmode="numeric" />
+        <label>おすすめ数</label>
+        <input id="recommendCount" type="number" min="0" max="20" inputmode="numeric" />
+        <label>日課リセット時刻</label>
+        <input id="resetHour" type="time" />
+        <button class="btn primary" id="saveSettings" type="button">設定保存</button>
+        <div class="splitline"></div>
+        <label>JSONバックアップ</label>
+        <button class="btn" id="exportJson" type="button">書き出し</button>
+        <textarea id="jsonBox" placeholder="ここにJSONを貼って読み込み"></textarea>
+        <div class="row wrap">
+          <button class="btn" id="copyJson" type="button">JSONコピー</button>
+          <button class="btn danger" id="importJson" type="button">読み込み</button>
+        </div>
       </div>
     </div>
   </div>
@@ -588,6 +444,19 @@
       </div>
       <label>出力文</label>
       <textarea id="outputBox"></textarea>
+      <div class="splitline"></div>
+      <h3>直近の花丸変換履歴</h3>
+      <div id="historyInOutput" class="controls"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="modal">
+      <div class="section-title">
+        <h2 id="historyTitle">花丸変換履歴</h2>
+        <button class="btn small ghost" data-close="historyModal" type="button">閉じる</button>
+      </div>
+      <div id="historyList" class="controls"></div>
     </div>
   </div>
 
@@ -600,26 +469,23 @@
         </div>
         <button class="btn small ghost" data-close="aiModal" type="button">閉じる</button>
       </div>
-      <div class="grid two">
-        <section class="controls">
-          <label>細分化してほしい札</label>
-          <input id="aiSourceTask" type="text" placeholder="例：洗面所をなんとかする" />
-          <label>AI依頼文</label>
-          <textarea id="aiPromptBox"></textarea>
-          <div class="row wrap">
-            <button class="btn" id="makeAiPrompt" type="button">依頼文生成</button>
-            <button class="btn primary" id="copyAiPrompt" type="button">依頼文コピー</button>
-          </div>
-        </section>
-        <section class="controls">
-          <label>AI整形結果を貼る</label>
-          <textarea id="aiImportBox" placeholder="[生活][単発][いつでも] キーケースのお金補充"></textarea>
-          <div class="row wrap">
-            <button class="btn" id="parseAiTasks" type="button">取り込み確認</button>
-            <button class="btn primary" id="importAiTasks" type="button">札として貼る</button>
-          </div>
-          <div id="aiParseResult" class="empty">タグ形式の結果をここで確認。</div>
-        </section>
+      <div class="controls">
+        <label>細分化してほしい札</label>
+        <input id="aiSourceTask" type="text" placeholder="例：洗面所をなんとかする" />
+        <label>AI依頼文</label>
+        <textarea id="aiPromptBox"></textarea>
+        <div class="row wrap">
+          <button class="btn" id="makeAiPrompt" type="button">依頼文生成</button>
+          <button class="btn primary" id="copyAiPrompt" type="button">依頼文コピー</button>
+        </div>
+        <div class="splitline"></div>
+        <label>AI整形結果を貼る</label>
+        <textarea id="aiImportBox" placeholder="[生活][単発][いつでも] キーケースのお金補充&#10;[生活][繰り返し:3日][いつでも] 洗面台だけ掃除"></textarea>
+        <div class="row wrap">
+          <button class="btn" id="parseAiTasks" type="button">取り込み確認</button>
+          <button class="btn primary" id="importAiTasks" type="button">札として貼る</button>
+        </div>
+        <div id="aiParseResult" class="empty">タグ形式の結果をここで確認。</div>
       </div>
     </div>
   </div>
@@ -628,38 +494,35 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const STORAGE_KEY = 'hanamaru-fuda-v1';
-    const DEFAULT_TEMPLATE = `花丸に変換した札：\n{{items}}\n\n花丸 +{{count}} / 累計 {{total}}`; 
+    const STORAGE_KEY = 'hanamaru-fuda-v2';
+    const OLD_STORAGE_KEY = 'hanamaru-fuda-v1';
+    const DEFAULT_TEMPLATE = `花丸に変換した札：\n{{items}}\n\n花丸 +{{count}} / 累計 {{total}}`;
 
+    const $ = (id) => document.getElementById(id);
     const state = loadState();
     let currentCategory = state.categories[0] || '生活';
     let lastUndo = null;
     let lastConvertedItems = [];
 
-    const $ = (id) => document.getElementById(id);
-
     function defaultState() {
       return {
-        version: 1,
+        version: 2,
         categories: ['生活', '創作'],
         tasks: [],
         totalStamps: 0,
-        settings: {
-          visibleLimit: 5,
-          recommendCount: 3,
-          resetHour: '05:00',
-          outputTemplate: DEFAULT_TEMPLATE,
-        },
+        settings: { visibleLimit: 5, recommendCount: 3, resetHour: '05:00', outputTemplate: DEFAULT_TEMPLATE },
         recommendations: {},
+        conversionHistory: []
       };
     }
 
     function loadState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(OLD_STORAGE_KEY);
         if (!raw) return defaultState();
-        const parsed = JSON.parse(raw);
-        return normalizeState(parsed);
+        const parsed = normalizeState(JSON.parse(raw));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        return parsed;
       } catch (error) {
         console.warn(error);
         return defaultState();
@@ -668,15 +531,13 @@
 
     function normalizeState(input) {
       const base = defaultState();
-      const merged = {
-        ...base,
-        ...input,
-        settings: { ...base.settings, ...(input && input.settings ? input.settings : {}) },
-      };
+      const merged = { ...base, ...input, settings: { ...base.settings, ...(input && input.settings ? input.settings : {}) } };
+      merged.version = 2;
       merged.categories = Array.isArray(merged.categories) && merged.categories.length ? uniqueClean(merged.categories) : base.categories;
       merged.tasks = Array.isArray(merged.tasks) ? merged.tasks.map(normalizeTask).filter(Boolean) : [];
       merged.totalStamps = Number.isFinite(Number(merged.totalStamps)) ? Number(merged.totalStamps) : 0;
       merged.recommendations = merged.recommendations && typeof merged.recommendations === 'object' ? merged.recommendations : {};
+      merged.conversionHistory = Array.isArray(merged.conversionHistory) ? merged.conversionHistory.slice(0, 3) : [];
       return merged;
     }
 
@@ -684,33 +545,38 @@
       if (!task || !String(task.title || '').trim()) return null;
       const kind = task.kind === 'repeat' ? 'repeat' : 'single';
       const repeatEvery = ['day','week','month','year'].includes(task.repeatEvery) ? task.repeatEvery : 'day';
+      const repeatInterval = Math.max(1, Number(task.repeatInterval) || 1);
       const dueKind = task.dueKind === 'dated' ? 'dated' : 'anytime';
+      const dueDate = dueKind === 'dated' ? (task.dueDate || todayISO()) : '';
+      const anchor = buildDueAnchor(dueDate, task.dueAnchor);
       return {
         id: task.id || makeId(),
         title: String(task.title).trim(),
         category: task.category || '生活',
         kind,
         repeatEvery,
+        repeatInterval,
         dueKind,
-        dueDate: dueKind === 'dated' ? (task.dueDate || todayISO()) : '',
+        dueDate,
+        dueAnchor: anchor,
         completed: Boolean(task.completed),
         completedAt: task.completedAt || null,
         stampedPeriods: task.stampedPeriods && typeof task.stampedPeriods === 'object' ? task.stampedPeriods : {},
-        createdAt: task.createdAt || new Date().toISOString(),
+        activePeriodKey: task.activePeriodKey || null,
+        createdAt: task.createdAt || new Date().toISOString()
       };
     }
 
-    function uniqueClean(values) {
-      return [...new Set(values.map(v => String(v).trim()).filter(Boolean))];
+    function buildDueAnchor(dueDate, existing) {
+      if (existing && typeof existing === 'object') return existing;
+      if (!dueDate) return { day: null, endOfMonth: false };
+      const d = parseISODate(dueDate);
+      return { day: d.getDate(), endOfMonth: d.getDate() === lastDayOfMonth(d.getFullYear(), d.getMonth()) };
     }
 
-    function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function makeId() {
-      return `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-    }
+    function uniqueClean(values) { return [...new Set(values.map(v => String(v).trim()).filter(Boolean))]; }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function makeId() { return `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 
     function nowShiftedDate() {
       const [h, m] = (state.settings.resetHour || '05:00').split(':').map(Number);
@@ -720,51 +586,105 @@
       return d;
     }
 
-    function todayISO() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
-
-    function periodKey(repeatEvery, date = nowShiftedDate()) {
+    function todayISO(date = new Date()) {
       const y = date.getFullYear();
       const m = String(date.getMonth() + 1).padStart(2, '0');
       const d = String(date.getDate()).padStart(2, '0');
-      if (repeatEvery === 'day') return `${y}-${m}-${d}`;
-      if (repeatEvery === 'month') return `${y}-${m}`;
-      if (repeatEvery === 'year') return `${y}`;
-      return `${y}-W${String(weekNumber(date)).padStart(2, '0')}`;
+      return `${y}-${m}-${d}`;
     }
 
-    function weekNumber(date) {
-      const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const day = tmp.getUTCDay() || 7;
-      tmp.setUTCDate(tmp.getUTCDate() + 4 - day);
-      const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
-      return Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+    function parseISODate(value) {
+      const [y, m, d] = String(value).split('-').map(Number);
+      return new Date(y, (m || 1) - 1, d || 1);
+    }
+
+    function dayOrdinal(date) { return Math.floor(new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() / 86400000); }
+    function monthOrdinal(date) { return date.getFullYear() * 12 + date.getMonth(); }
+    function lastDayOfMonth(year, monthIndex) { return new Date(year, monthIndex + 1, 0).getDate(); }
+
+    function repeatLabel(task) {
+      const n = Math.max(1, Number(task.repeatInterval) || 1);
+      const unit = { day: '日', week: '週', month: '月', year: '年' }[task.repeatEvery] || '日';
+      return n === 1 ? `${unit}ごと` : `${n}${unit}ごと`;
+    }
+
+    function periodKey(task, date = nowShiftedDate()) {
+      const interval = Math.max(1, Number(task.repeatInterval) || 1);
+      if (task.repeatEvery === 'day') return `day:${interval}:${Math.floor(dayOrdinal(date) / interval)}`;
+      if (task.repeatEvery === 'week') return `week:${interval}:${Math.floor(Math.floor((dayOrdinal(date) + 3) / 7) / interval)}`;
+      if (task.repeatEvery === 'month') return `month:${interval}:${Math.floor(monthOrdinal(date) / interval)}`;
+      return `year:${interval}:${Math.floor(date.getFullYear() / interval)}`;
+    }
+
+    function currentDayKey() { return `day:1:${Math.floor(dayOrdinal(nowShiftedDate()))}`; }
+
+    function addRepeatIntervalDate(date, task) {
+      const n = Math.max(1, Number(task.repeatInterval) || 1);
+      const d = new Date(date.getTime());
+      if (task.repeatEvery === 'day') d.setDate(d.getDate() + n);
+      if (task.repeatEvery === 'week') d.setDate(d.getDate() + n * 7);
+      if (task.repeatEvery === 'month') {
+        const baseDay = task.dueAnchor && task.dueAnchor.day ? Number(task.dueAnchor.day) : d.getDate();
+        const targetMonth = d.getMonth() + n;
+        const targetYear = d.getFullYear() + Math.floor(targetMonth / 12);
+        const monthIndex = ((targetMonth % 12) + 12) % 12;
+        const last = lastDayOfMonth(targetYear, monthIndex);
+        const day = task.dueAnchor && task.dueAnchor.endOfMonth ? last : Math.min(baseDay, last);
+        return new Date(targetYear, monthIndex, day);
+      }
+      if (task.repeatEvery === 'year') {
+        const baseDay = task.dueAnchor && task.dueAnchor.day ? Number(task.dueAnchor.day) : d.getDate();
+        const targetYear = d.getFullYear() + n;
+        const last = lastDayOfMonth(targetYear, d.getMonth());
+        const day = task.dueAnchor && task.dueAnchor.endOfMonth ? last : Math.min(baseDay, last);
+        return new Date(targetYear, d.getMonth(), day);
+      }
+      return d;
+    }
+
+    function advanceDueDateForward(task) {
+      if (task.kind !== 'repeat' || task.dueKind !== 'dated' || !task.dueDate) return;
+      let d = parseISODate(task.dueDate);
+      const today = parseISODate(todayISO(nowShiftedDate()));
+      let guard = 0;
+      while (d < today && guard < 120) {
+        d = addRepeatIntervalDate(d, task);
+        guard += 1;
+      }
+      task.dueDate = todayISO(d);
     }
 
     function applyRepeatReset() {
       let changed = false;
       state.tasks.forEach(task => {
         if (task.kind !== 'repeat') return;
-        const key = periodKey(task.repeatEvery);
-        if (task.stampedPeriods && task.stampedPeriods[key]) {
-          task.completed = true;
+        const key = periodKey(task);
+        if (!task.activePeriodKey) {
+          task.activePeriodKey = key;
+          changed = true;
           return;
         }
-        if (task.completed && task.completedAt) {
-          const completedKey = periodKey(task.repeatEvery, new Date(task.completedAt));
-          if (completedKey !== key) {
+        if (task.activePeriodKey !== key) {
+          const oldKey = task.activePeriodKey;
+          const wasHandled = Boolean(task.stampedPeriods && task.stampedPeriods[oldKey]);
+          if (wasHandled) advanceDueDateForward(task);
+          task.activePeriodKey = key;
+          if (!(task.stampedPeriods && task.stampedPeriods[key])) {
             task.completed = false;
             task.completedAt = null;
-            changed = true;
           }
+          changed = true;
         }
+        if (task.stampedPeriods && task.stampedPeriods[key]) task.completed = true;
       });
       if (changed) save();
+    }
+
+    function showPage(name) {
+      $('listPage').classList.toggle('hidden', name !== 'list');
+      $('editPage').classList.toggle('hidden', name !== 'edit');
+      $('bottomBar').classList.toggle('hidden', name !== 'list');
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     function render() {
@@ -772,6 +692,7 @@
       if (!state.categories.includes(currentCategory)) currentCategory = state.categories[0];
       $('stampTotal').textContent = state.totalStamps;
       renderTabs();
+      renderCategorySelect();
       renderSettingsManage();
       renderTasks();
       save();
@@ -785,11 +706,19 @@
         btn.type = 'button';
         btn.className = `tab ${category === currentCategory ? 'active' : ''}`;
         btn.textContent = category;
-        btn.addEventListener('click', () => {
-          currentCategory = category;
-          render();
-        });
+        btn.addEventListener('click', () => { currentCategory = category; render(); });
         tabs.appendChild(btn);
+      });
+    }
+
+    function renderCategorySelect() {
+      const select = $('taskCategory');
+      select.innerHTML = '';
+      state.categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
       });
     }
 
@@ -810,7 +739,9 @@
       renderTaskList($('anytimeFolded'), foldedAnytime, recommendedIds);
       renderTaskList($('doneTasks'), sortTasks(done, true), recommendedIds);
 
-      $('dueSplit').classList.toggle('hidden', due.length === 0 || (visibleAnytime.length === 0 && foldedAnytime.length === 0));
+      $('dueHeading').classList.toggle('hidden', due.length === 0);
+      $('anytimeHeading').classList.toggle('hidden', visibleAnytime.length === 0 && foldedAnytime.length === 0);
+      $('doneHeading').classList.toggle('hidden', done.length === 0);
       $('foldedWrap').classList.toggle('hidden', foldedAnytime.length === 0);
       $('foldedSummary').textContent = `残りの札 ${foldedAnytime.length}枚`;
       $('emptyState').classList.toggle('hidden', tasks.length !== 0);
@@ -833,33 +764,24 @@
     function taskElement(task, recommended) {
       const el = document.createElement('article');
       el.className = `task ${task.completed ? 'done' : ''} ${recommended ? 'recommended' : ''}`;
-      const check = document.createElement('button');
-      check.type = 'button';
-      check.className = 'check';
-      check.textContent = task.completed ? '✓' : '札';
-      check.setAttribute('aria-label', task.completed ? '未完了に戻す' : '完了にする');
-      check.addEventListener('click', () => toggleTask(task.id));
-
       const main = document.createElement('div');
-      main.className = 'task-main';
       const title = document.createElement('div');
       title.className = 'task-title';
       title.textContent = task.title;
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      if (recommended && !task.completed) meta.appendChild(pill('おすすめ', 'recommended'));
-      meta.appendChild(pill(task.kind === 'repeat' ? repeatLabel(task.repeatEvery) : '単発', task.kind === 'repeat' ? 'repeat' : ''));
-      if (task.dueKind === 'dated') meta.appendChild(pill(`期限 ${task.dueDate || '未設定'}`, 'due'));
-      else meta.appendChild(pill('いつでも', ''));
-      main.append(title, meta);
-
+      main.appendChild(title);
+      if (task.dueKind === 'dated') {
+        const due = document.createElement('div');
+        due.className = 'task-due';
+        due.textContent = `期限 ${task.dueDate}`;
+        main.appendChild(due);
+      }
       const menu = document.createElement('div');
       menu.className = 'task-menu';
       const edit = document.createElement('button');
       edit.type = 'button';
       edit.className = 'btn small';
       edit.textContent = '編集';
-      edit.addEventListener('click', () => editTask(task.id));
+      edit.addEventListener('click', () => openTaskForm(task.id));
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'btn small ghost';
@@ -867,50 +789,26 @@
       del.setAttribute('aria-label', '削除');
       del.addEventListener('click', () => deleteTask(task.id));
       menu.append(edit, del);
-
-      el.append(check, main, menu);
-      el.addEventListener('click', (event) => {
-        if (event.target.closest('button')) return;
-        toggleTask(task.id);
-      });
+      el.append(main, menu);
+      el.addEventListener('click', (event) => { if (!event.target.closest('button')) toggleTask(task.id); });
       return el;
     }
 
-    function pill(text, cls) {
-      const span = document.createElement('span');
-      span.className = `pill ${cls || ''}`;
-      span.textContent = text;
-      return span;
-    }
-
-    function repeatLabel(value) {
-      return { day: '毎日', week: '毎週', month: '毎月', year: '毎年' }[value] || '繰り返し';
-    }
-
     function getRecommendationIds() {
-      const key = `${currentCategory}:${periodKey('day')}`;
+      const key = `${currentCategory}:${currentDayKey()}`;
+      const activeAnytimeIds = state.tasks.filter(t => t.category === currentCategory && !t.completed && t.dueKind === 'anytime').map(t => t.id);
       const existing = state.recommendations[key];
-      const activeAnytimeIds = state.tasks
-        .filter(t => t.category === currentCategory && !t.completed && t.dueKind === 'anytime')
-        .map(t => t.id);
-      if (Array.isArray(existing) && existing.some(id => activeAnytimeIds.includes(id))) {
-        return existing.filter(id => activeAnytimeIds.includes(id));
-      }
+      if (Array.isArray(existing) && existing.some(id => activeAnytimeIds.includes(id))) return existing.filter(id => activeAnytimeIds.includes(id));
       return refreshRecommendations(false);
     }
 
     function refreshRecommendations(shouldRender = true) {
-      const key = `${currentCategory}:${periodKey('day')}`;
+      const key = `${currentCategory}:${currentDayKey()}`;
       const count = Math.max(0, Number(state.settings.recommendCount) || 0);
-      const ids = shuffle(state.tasks
-        .filter(t => t.category === currentCategory && !t.completed && t.dueKind === 'anytime')
-        .map(t => t.id)).slice(0, count);
+      const ids = shuffle(state.tasks.filter(t => t.category === currentCategory && !t.completed && t.dueKind === 'anytime').map(t => t.id)).slice(0, count);
       state.recommendations[key] = ids;
       save();
-      if (shouldRender) {
-        render();
-        toast('おすすめを入れ替えた。義務ではない、ただ光っている札。');
-      }
+      if (shouldRender) { render(); toast('おすすめを入れ替えた。'); }
       return ids;
     }
 
@@ -923,23 +821,70 @@
       return array;
     }
 
+    function openTaskForm(id = '') {
+      const task = id ? state.tasks.find(t => t.id === id) : null;
+      $('formTitle').textContent = task ? '札を編集' : '札を貼る';
+      $('taskId').value = task ? task.id : '';
+      $('taskTitle').value = task ? task.title : '';
+      $('taskCategory').value = task ? task.category : currentCategory;
+      $('taskKind').value = task ? task.kind : 'single';
+      $('repeatInterval').value = task ? task.repeatInterval : 1;
+      $('repeatEvery').value = task ? task.repeatEvery : 'day';
+      $('dueKind').value = task ? task.dueKind : 'anytime';
+      $('dueDate').value = task && task.dueDate ? task.dueDate : todayISO();
+      syncFormVisibility();
+      showPage('edit');
+    }
+
+    function syncFormVisibility() {
+      $('repeatFields').classList.toggle('hidden', $('taskKind').value !== 'repeat');
+      $('dueDate').classList.toggle('hidden', $('dueKind').value !== 'dated');
+    }
+
+    function saveTaskFromForm(event) {
+      event.preventDefault();
+      const id = $('taskId').value;
+      const title = $('taskTitle').value.trim();
+      if (!title) return;
+      const data = normalizeTask({
+        id: id || makeId(),
+        title,
+        category: $('taskCategory').value || currentCategory,
+        kind: $('taskKind').value,
+        repeatInterval: $('repeatInterval').value,
+        repeatEvery: $('repeatEvery').value,
+        dueKind: $('dueKind').value,
+        dueDate: $('dueKind').value === 'dated' ? ($('dueDate').value || todayISO()) : '',
+        createdAt: new Date().toISOString()
+      });
+      data.activePeriodKey = data.kind === 'repeat' ? periodKey(data) : null;
+      const index = state.tasks.findIndex(t => t.id === id);
+      if (index >= 0) {
+        data.createdAt = state.tasks[index].createdAt;
+        data.completed = state.tasks[index].completed;
+        data.completedAt = state.tasks[index].completedAt;
+        data.stampedPeriods = state.tasks[index].stampedPeriods || {};
+        if (data.kind !== state.tasks[index].kind || data.repeatEvery !== state.tasks[index].repeatEvery || data.repeatInterval !== state.tasks[index].repeatInterval) {
+          data.completed = false;
+          data.completedAt = null;
+          data.stampedPeriods = {};
+        }
+        state.tasks[index] = data;
+      } else {
+        state.tasks.push(data);
+      }
+      currentCategory = data.category;
+      save();
+      showPage('list');
+      render();
+      toast(index >= 0 ? '札を編集した。' : '札を貼った。');
+    }
+
     function toggleTask(id) {
       const task = state.tasks.find(t => t.id === id);
       if (!task) return;
       task.completed = !task.completed;
       task.completedAt = task.completed ? new Date().toISOString() : null;
-      save();
-      render();
-    }
-
-    function editTask(id) {
-      const task = state.tasks.find(t => t.id === id);
-      if (!task) return;
-      const next = prompt('札の名前を編集', task.title);
-      if (next === null) return;
-      const title = next.trim();
-      if (!title) return;
-      task.title = title;
       save();
       render();
     }
@@ -953,24 +898,13 @@
       render();
     }
 
-    function addTaskFromForm(event) {
-      event.preventDefault();
-      const title = $('taskTitle').value.trim();
-      if (!title) return;
-      const kind = $('taskKind').value;
-      const dueKind = $('dueKind').value;
-      state.tasks.push(normalizeTask({
-        title,
-        category: currentCategory,
-        kind,
-        repeatEvery: $('repeatEvery').value,
-        dueKind,
-        dueDate: dueKind === 'dated' ? ($('dueDate').value || todayISO()) : '',
-      }));
-      $('taskTitle').value = '';
-      save();
-      render();
-      toast('札を貼った。脳内から一枚剥離。');
+    function convertibleTasks() {
+      return state.tasks.filter(task => {
+        if (!task.completed) return false;
+        if (task.kind === 'single') return true;
+        const key = periodKey(task);
+        return !(task.stampedPeriods && task.stampedPeriods[key]);
+      });
     }
 
     function updateConvertButton() {
@@ -979,36 +913,29 @@
       $('convertBtn').disabled = count === 0;
     }
 
-    function convertibleTasks() {
-      return state.tasks.filter(task => {
-        if (!task.completed) return false;
-        if (task.kind === 'single') return true;
-        const key = periodKey(task.repeatEvery);
-        return !(task.stampedPeriods && task.stampedPeriods[key]);
-      });
-    }
-
     function convertCompleted() {
       const targets = convertibleTasks();
-      if (!targets.length) {
-        toast('花丸にする完了札がない。');
-        return;
-      }
+      if (!targets.length) { toast('花丸にする完了札がない。'); return; }
       lastUndo = JSON.stringify(state);
-      lastConvertedItems = targets.map(t => ({ ...t }));
       const now = new Date().toISOString();
+      lastConvertedItems = targets.map(t => ({ ...t }));
       targets.forEach(task => {
         if (task.kind === 'repeat') {
-          const key = periodKey(task.repeatEvery);
+          const key = periodKey(task);
           task.stampedPeriods = task.stampedPeriods || {};
           task.stampedPeriods[key] = now;
+          task.activePeriodKey = key;
           task.completed = true;
           task.completedAt = task.completedAt || now;
         }
       });
-      const targetIds = new Set(targets.filter(t => t.kind === 'single').map(t => t.id));
-      state.tasks = state.tasks.filter(t => !targetIds.has(t.id));
+      const removeIds = new Set(targets.filter(t => t.kind === 'single').map(t => t.id));
+      state.tasks = state.tasks.filter(t => !removeIds.has(t.id));
       state.totalStamps += targets.length;
+      save();
+      const outputText = buildOutput(targets);
+      state.conversionHistory.unshift({ id: makeId(), createdAt: now, count: targets.length, items: targets.map(t => t.title), text: outputText });
+      state.conversionHistory = state.conversionHistory.slice(0, 3);
       save();
       $('undoBtn').disabled = false;
       showStamp();
@@ -1018,9 +945,9 @@
 
     function undoConvert() {
       if (!lastUndo) return;
-      const restored = JSON.parse(lastUndo);
+      const restored = normalizeState(JSON.parse(lastUndo));
       Object.keys(state).forEach(key => delete state[key]);
-      Object.assign(state, normalizeState(restored));
+      Object.assign(state, restored);
       lastUndo = null;
       lastConvertedItems = [];
       $('undoBtn').disabled = true;
@@ -1029,22 +956,18 @@
       toast('直前の花丸変換を戻した。');
     }
 
+    function buildOutput(items = lastConvertedItems) {
+      const itemText = items.map(t => `・${t.title}`).join('\n');
+      const template = $('templateBox') && $('templateBox').value ? $('templateBox').value : state.settings.outputTemplate || DEFAULT_TEMPLATE;
+      return template.replaceAll('{{items}}', itemText).replaceAll('{{count}}', String(items.length)).replaceAll('{{total}}', String(state.totalStamps)).replaceAll('{{category}}', currentCategory).replaceAll('{{date}}', todayISO());
+    }
+
     function showOutput(items) {
       $('templateBox').value = state.settings.outputTemplate || DEFAULT_TEMPLATE;
       $('convertSummary').textContent = `${items.length}枚の札を花丸に変換。`;
       $('outputBox').value = buildOutput(items);
+      renderHistory($('historyInOutput'));
       openModal('outputModal');
-    }
-
-    function buildOutput(items = lastConvertedItems) {
-      const itemText = items.map(t => `・${t.title}`).join('\n');
-      const template = $('templateBox').value || state.settings.outputTemplate || DEFAULT_TEMPLATE;
-      return template
-        .replaceAll('{{items}}', itemText)
-        .replaceAll('{{count}}', String(items.length))
-        .replaceAll('{{total}}', String(state.totalStamps))
-        .replaceAll('{{category}}', currentCategory)
-        .replaceAll('{{date}}', todayISO());
     }
 
     function saveTemplate() {
@@ -1054,14 +977,43 @@
       toast('テンプレートを保存。');
     }
 
-    async function copyText(text, label = 'コピーした。') {
-      try {
-        await navigator.clipboard.writeText(text);
-        toast(label);
-      } catch (error) {
-        console.warn(error);
-        toast('コピー失敗。テキスト欄を長押しで選択して使う。');
+    function renderHistory(container) {
+      container.innerHTML = '';
+      if (!state.conversionHistory.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = '履歴なし。';
+        container.appendChild(empty);
+        return;
       }
+      state.conversionHistory.slice(0, 3).forEach((entry, index) => {
+        const box = document.createElement('div');
+        box.className = 'card';
+        box.style.margin = '0';
+        const title = document.createElement('div');
+        title.className = 'task-title';
+        title.textContent = `${index + 1}. ${formatDateTime(entry.createdAt)} / ${entry.count}枚`;
+        const text = document.createElement('textarea');
+        text.value = entry.text;
+        const copy = document.createElement('button');
+        copy.type = 'button';
+        copy.className = 'btn primary';
+        copy.textContent = 'この履歴をコピー';
+        copy.addEventListener('click', () => copyText(entry.text, '履歴をコピー。'));
+        box.append(title, text, copy);
+        container.appendChild(box);
+      });
+    }
+
+    function formatDateTime(value) {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '';
+      return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    async function copyText(text, label = 'コピーした。') {
+      try { await navigator.clipboard.writeText(text); toast(label); }
+      catch (error) { console.warn(error); toast('コピー失敗。テキスト欄を長押しで選択して使う。'); }
     }
 
     function showStamp() {
@@ -1083,10 +1035,7 @@
         btn.type = 'button';
         btn.className = `btn small ${category === currentCategory ? 'primary' : ''}`;
         btn.textContent = category;
-        btn.addEventListener('click', () => {
-          currentCategory = category;
-          render();
-        });
+        btn.addEventListener('click', () => { currentCategory = category; render(); });
         box.appendChild(btn);
       });
     }
@@ -1142,7 +1091,7 @@
 
     function makeAiPrompt() {
       const source = $('aiSourceTask').value.trim() || 'ここに細分化したいタスクを書く';
-      $('aiPromptBox').value = `次のタスクを、花丸札アプリに貼れる小さい札へ分解して。\n\n対象：${source}\n\n条件：\n・3〜7分でできる粒度にする\n・判断が必要な札と、手を動かすだけの札を分ける\n・最初の一手をかなり小さくする\n・普通のToDoではなく「頭の中の札を剥がす」感じにする\n・出力は下のタグ形式だけにする\n\n形式：\n[カテゴリ][単発][いつでも] タスク名\n[カテゴリ][繰り返し:日][いつでも] タスク名\n[カテゴリ][単発][期限あり:YYYY-MM-DD] タスク名\n\nカテゴリ候補：${state.categories.join('、')}`;
+      $('aiPromptBox').value = `次のタスクを、花丸札アプリに貼れる小さい札へ分解して。\n\n対象：${source}\n\n条件：\n・3〜7分でできる粒度にする\n・判断が必要な札と、手を動かすだけの札を分ける\n・最初の一手をかなり小さくする\n・普通のToDoではなく「頭の中の札を剥がす」感じにする\n・出力は下のタグ形式だけにする\n\n形式：\n[カテゴリ][単発][いつでも] タスク名\n[カテゴリ][繰り返し:日][いつでも] タスク名\n[カテゴリ][繰り返し:3日][いつでも] タスク名\n[カテゴリ][繰り返し:2週][期限あり:YYYY-MM-DD] タスク名\n\nカテゴリ候補：${state.categories.join('、')}`;
     }
 
     function parseAiLines() {
@@ -1156,27 +1105,28 @@
         const kindTag = match[2].trim();
         const dueTag = match[3].trim();
         const title = match[4].trim();
-        if (!title) continue;
-        const kind = kindTag.startsWith('繰り返し') ? 'repeat' : 'single';
-        const repeatEvery = repeatFromTag(kindTag);
+        const repeat = repeatFromTag(kindTag);
+        const kind = repeat ? 'repeat' : 'single';
         const dueDateMatch = dueTag.match(/^期限あり[:：](\d{4}-\d{2}-\d{2})$/);
         const dueKind = dueDateMatch ? 'dated' : 'anytime';
-        tasks.push(normalizeTask({ category, kind, repeatEvery, dueKind, dueDate: dueDateMatch ? dueDateMatch[1] : '', title }));
+        tasks.push(normalizeTask({ category, kind, repeatEvery: repeat ? repeat.unit : 'day', repeatInterval: repeat ? repeat.interval : 1, dueKind, dueDate: dueDateMatch ? dueDateMatch[1] : '', title }));
       }
       return tasks;
     }
 
     function repeatFromTag(tag) {
-      if (tag.includes('週')) return 'week';
-      if (tag.includes('月')) return 'month';
-      if (tag.includes('年')) return 'year';
-      return 'day';
+      if (!tag.startsWith('繰り返し')) return null;
+      const match = tag.match(/繰り返し[:：]?\s*(\d+)?\s*([日週月年])?/);
+      const interval = Math.max(1, Number(match && match[1] ? match[1] : 1));
+      const unitChar = match && match[2] ? match[2] : '日';
+      const unit = { '日': 'day', '週': 'week', '月': 'month', '年': 'year' }[unitChar] || 'day';
+      return { interval, unit };
     }
 
     function previewAiTasks() {
       const tasks = parseAiLines();
       $('aiParseResult').innerHTML = tasks.length
-        ? tasks.map(t => `・${escapeHtml(t.category)} / ${t.kind === 'repeat' ? repeatLabel(t.repeatEvery) : '単発'} / ${t.dueKind === 'dated' ? `期限 ${escapeHtml(t.dueDate)}` : 'いつでも'}：${escapeHtml(t.title)}`).join('<br>')
+        ? tasks.map(t => `・${escapeHtml(t.category)} / ${t.kind === 'repeat' ? escapeHtml(repeatLabel(t)) : '単発'} / ${t.dueKind === 'dated' ? `期限 ${escapeHtml(t.dueDate)}` : 'いつでも'}：${escapeHtml(t.title)}`).join('<br>')
         : '取り込める札がない。タグの括弧を確認。';
       return tasks;
     }
@@ -1186,6 +1136,7 @@
       if (!tasks.length) return;
       const newCategories = tasks.map(t => t.category).filter(c => !state.categories.includes(c));
       state.categories.push(...uniqueClean(newCategories));
+      tasks.forEach(task => { if (task.kind === 'repeat') task.activePeriodKey = periodKey(task); });
       state.tasks.push(...tasks);
       currentCategory = tasks[0].category;
       save();
@@ -1194,10 +1145,7 @@
       toast(`${tasks.length}枚取り込んだ。`);
     }
 
-    function escapeHtml(text) {
-      return String(text).replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[c]));
-    }
-
+    function escapeHtml(text) { return String(text).replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[c])); }
     function openModal(id) { $(id).classList.add('show'); }
     function closeModal(id) { $(id).classList.remove('show'); }
 
@@ -1211,23 +1159,19 @@
     }
 
     function bindEvents() {
-      $('taskForm').addEventListener('submit', addTaskFromForm);
-      $('taskKind').addEventListener('change', () => $('repeatEvery').classList.toggle('hidden', $('taskKind').value !== 'repeat'));
-      $('dueKind').addEventListener('change', () => $('dueDate').classList.toggle('hidden', $('dueKind').value !== 'dated'));
+      $('newTaskBtn').addEventListener('click', () => openTaskForm(''));
+      $('cancelEdit').addEventListener('click', () => showPage('list'));
+      $('taskForm').addEventListener('submit', saveTaskFromForm);
+      $('taskKind').addEventListener('change', syncFormVisibility);
+      $('dueKind').addEventListener('change', syncFormVisibility);
       $('refreshReco').addEventListener('click', () => refreshRecommendations(true));
       $('convertBtn').addEventListener('click', convertCompleted);
       $('undoBtn').addEventListener('click', undoConvert);
       $('openSettings').addEventListener('click', () => openModal('settingsModal'));
-      $('openAiTools').addEventListener('click', () => {
-        makeAiPrompt();
-        openModal('aiModal');
-      });
+      $('openAiTools').addEventListener('click', () => { makeAiPrompt(); openModal('aiModal'); });
+      $('openHistory').addEventListener('click', () => { renderHistory($('historyList')); openModal('historyModal'); });
       document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.close)));
-      document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.addEventListener('click', event => {
-          if (event.target === backdrop) closeModal(backdrop.id);
-        });
-      });
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.addEventListener('click', event => { if (event.target === backdrop) closeModal(backdrop.id); }));
       $('saveSettings').addEventListener('click', saveSettings);
       $('addCategory').addEventListener('click', addCategory);
       $('exportJson').addEventListener('click', exportJson);
@@ -1242,10 +1186,7 @@
       $('importAiTasks').addEventListener('click', importAiTasks);
     }
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn));
-    }
-
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn));
     bindEvents();
     render();
   </script>
