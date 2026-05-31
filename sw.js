@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanamaru-fuda-v10';
+const CACHE_NAME = 'hanamaru-fuda-v11';
 const APP_SHELL = [
   './',
   './index.html',
@@ -27,6 +27,16 @@ function patchIndex(html) {
   );
 
   patched = patched.replace(
+    '<details id="foldedWrap" class="hidden">\n          <summary id="foldedSummary">残りの札</summary>\n          <div class="task-list" id="anytimeFolded" style="margin-top:6px"></div>\n        </details>\n        <div id="doneDivider" class="done-divider hidden"></div>',
+    '<details id="foldedWrap" class="hidden">\n          <summary id="foldedSummary">残りの札</summary>\n          <div class="task-list" id="anytimeFolded" style="margin-top:6px"></div>\n        </details>\n        <details id="futureWrap" class="hidden">\n          <summary id="futureSummary">開始待ち</summary>\n          <div class="task-list" id="futureTasks" style="margin-top:6px"></div>\n        </details>\n        <div id="doneDivider" class="done-divider hidden"></div>'
+  );
+
+  patched = patched.replace(
+    '<label>カテゴリ</label>\n          <select id="taskCategory"></select>\n          <label>種類</label>',
+    '<label>カテゴリ</label>\n          <select id="taskCategory"></select>\n          <label>開始</label>\n          <div class="row wrap">\n            <select id="startKind" class="grow" aria-label="開始">\n              <option value="now">今から</option>\n              <option value="dated">開始日あり</option>\n            </select>\n            <input id="startDate" class="grow hidden" type="date" aria-label="開始日" />\n          </div>\n          <label>種類</label>'
+  );
+
+  patched = patched.replace(
     "$('convertBtn').textContent = count ? `花丸スタンプ変換（${count}）` : '花丸スタンプ変換';",
     "$('convertBtn').textContent = count ? `変換 ${count}` : '変換';"
   );
@@ -42,8 +52,37 @@ function patchIndex(html) {
   );
 
   patched = patched.replace(
+    "const dueKind = task.dueKind === 'dated' ? 'dated' : 'anytime';\n      const dueDate = dueKind === 'dated' ? (task.dueDate || todayISO()) : '';",
+    "const startKind = task.startKind === 'dated' ? 'dated' : 'now';\n      const startDate = startKind === 'dated' ? (task.startDate || todayISO()) : '';\n      const dueKind = task.dueKind === 'dated' ? 'dated' : 'anytime';\n      const dueDate = dueKind === 'dated' ? (task.dueDate || todayISO()) : '';"
+  );
+
+  patched = patched.replace(
+    'repeatInterval,\n        dueKind,',
+    'repeatInterval,\n        startKind,\n        startDate,\n        dueKind,'
+  );
+
+  patched = patched.replace(
     'createdAt: task.createdAt || new Date().toISOString()\n      };',
     'createdAt: task.createdAt || new Date().toISOString(),\n        sortOrder: Math.floor(Number(task.sortOrder) || 0)\n      };'
+  );
+
+  patched = patched.replace(
+    `function todayISO(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return \`${y}-${m}-${d}\`;
+    }`,
+    `function todayISO(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return \`${y}-${m}-${d}\`;
+    }
+
+    function isFutureTask(task) {
+      return task.startKind === 'dated' && task.startDate && task.startDate > todayISO(nowShiftedDate());
+    }`
   );
 
   patched = patched.replace(
@@ -61,10 +100,111 @@ function patchIndex(html) {
           if (manual !== 0) return manual;
         }
         if (!done && a.dueKind === 'dated' && b.dueKind === 'dated') return String(a.dueDate).localeCompare(String(b.dueDate));
+        if (!done && isFutureTask(a) && isFutureTask(b)) return String(a.startDate).localeCompare(String(b.startDate));
         if (done) return String(b.completedAt || '').localeCompare(String(a.completedAt || ''));
         return String(a.createdAt).localeCompare(String(b.createdAt));
       });
     }`
+  );
+
+  patched = patched.replace(
+    `function renderTasks() {
+      const tasks = state.tasks.filter(t => t.category === currentCategory);
+      const active = tasks.filter(t => !t.completed);
+      const done = tasks.filter(t => t.completed);
+      const due = sortTasks(active.filter(t => t.dueKind === 'dated'));
+      const anytime = sortTasks(active.filter(t => t.dueKind !== 'dated'));
+      const recommendedIds = new Set(getRecommendationIds());
+      const visibleLimit = Math.max(1, Number(state.settings.visibleLimit) || 5);
+      const visibleAnytime = anytime.slice(0, visibleLimit);
+      const foldedAnytime = anytime.slice(visibleLimit);
+      renderTaskList($('dueTasks'), due, recommendedIds);
+      renderTaskList($('anytimeVisible'), visibleAnytime, recommendedIds);
+      renderTaskList($('anytimeFolded'), foldedAnytime, recommendedIds);
+      renderTaskList($('doneTasks'), sortTasks(done, true), recommendedIds);
+      $('foldedWrap').classList.toggle('hidden', foldedAnytime.length === 0);
+      $('foldedSummary').textContent = \`残りの札 \${foldedAnytime.length}枚\`;
+      $('doneDivider').classList.toggle('hidden', done.length === 0 || (due.length + visibleAnytime.length + foldedAnytime.length === 0));
+      $('emptyState').classList.toggle('hidden', tasks.length !== 0);
+      updateConvertButton();
+    }`,
+    `function renderTasks() {
+      const tasks = state.tasks.filter(t => t.category === currentCategory);
+      const future = sortTasks(tasks.filter(t => !t.completed && isFutureTask(t)));
+      const active = tasks.filter(t => !t.completed && !isFutureTask(t));
+      const done = tasks.filter(t => t.completed);
+      const due = sortTasks(active.filter(t => t.dueKind === 'dated'));
+      const anytime = sortTasks(active.filter(t => t.dueKind !== 'dated'));
+      const recommendedIds = new Set(getRecommendationIds());
+      const visibleLimit = Math.max(1, Number(state.settings.visibleLimit) || 5);
+      const visibleAnytime = anytime.slice(0, visibleLimit);
+      const foldedAnytime = anytime.slice(visibleLimit);
+      renderTaskList($('dueTasks'), due, recommendedIds);
+      renderTaskList($('anytimeVisible'), visibleAnytime, recommendedIds);
+      renderTaskList($('anytimeFolded'), foldedAnytime, recommendedIds);
+      renderTaskList($('futureTasks'), future, recommendedIds);
+      renderTaskList($('doneTasks'), sortTasks(done, true), recommendedIds);
+      $('foldedWrap').classList.toggle('hidden', foldedAnytime.length === 0);
+      $('foldedSummary').textContent = \`残りの札 \${foldedAnytime.length}枚\`;
+      $('futureWrap').classList.toggle('hidden', future.length === 0);
+      $('futureSummary').textContent = \`開始待ち \${future.length}枚\`;
+      $('doneDivider').classList.toggle('hidden', done.length === 0 || (due.length + visibleAnytime.length + foldedAnytime.length + future.length === 0));
+      $('emptyState').classList.toggle('hidden', tasks.length !== 0);
+      updateConvertButton();
+    }`
+  );
+
+  patched = patched.replace(
+    `if (task.dueKind === 'dated') {
+        const due = document.createElement('div');
+        due.className = 'task-due';
+        due.textContent = \`期限 \${task.dueDate}\`;
+        main.appendChild(due);
+      }`,
+    `if (task.dueKind === 'dated') {
+        const due = document.createElement('div');
+        due.className = 'task-due';
+        due.textContent = \`期限 \${task.dueDate}\`;
+        main.appendChild(due);
+      }
+      if (isFutureTask(task)) {
+        const start = document.createElement('div');
+        start.className = 'task-start';
+        start.textContent = \`開始 \${task.startDate}\`;
+        main.appendChild(start);
+      }`
+  );
+
+  patched = patched.replace(
+    "const activeAnytimeIds = state.tasks.filter(t => t.category === currentCategory && !t.completed && t.dueKind === 'anytime').map(t => t.id);",
+    "const activeAnytimeIds = state.tasks.filter(t => t.category === currentCategory && !t.completed && !isFutureTask(t) && t.dueKind === 'anytime').map(t => t.id);"
+  );
+
+  patched = patched.replace(
+    "const ids = shuffle(state.tasks.filter(t => t.category === currentCategory && !t.completed && t.dueKind === 'anytime').map(t => t.id)).slice(0, count);",
+    "const ids = shuffle(state.tasks.filter(t => t.category === currentCategory && !t.completed && !isFutureTask(t) && t.dueKind === 'anytime').map(t => t.id)).slice(0, count);"
+  );
+
+  patched = patched.replace(
+    "$('taskKind').value = task ? task.kind : 'single';",
+    "$('startKind').value = task ? (task.startKind || 'now') : 'now';\n      $('startDate').value = task && task.startDate ? task.startDate : todayISO();\n      $('taskKind').value = task ? task.kind : 'single';"
+  );
+
+  patched = patched.replace(
+    `function syncFormVisibility() {
+      $('repeatFields').classList.toggle('hidden', $('taskKind').value !== 'repeat');
+      $('dueDate').classList.toggle('hidden', $('dueKind').value !== 'dated');
+    }`,
+    `function syncFormVisibility() {
+      $('repeatFields').classList.toggle('hidden', $('taskKind').value !== 'repeat');
+      $('startDate').classList.toggle('hidden', $('startKind').value !== 'dated');
+      $('dueDate').classList.toggle('hidden', $('dueKind').value !== 'dated');
+    }`
+  );
+
+  patched = patched.replace(
+    "category: $('taskCategory').value || currentCategory,\n        kind: $('taskKind').value,",
+    "category: $('taskCategory').value || currentCategory,\n        startKind: $('startKind').value,\n        startDate: $('startKind').value === 'dated' ? ($('startDate').value || todayISO()) : '',\n        kind: $('taskKind').value,"
   );
 
   patched = patched.replace(
@@ -75,6 +215,11 @@ function patchIndex(html) {
   patched = patched.replace(
     'state.tasks.push(data);',
     'data.sortOrder = data.dueKind === \'anytime\' ? Date.now() : 0;\n        state.tasks.push(data);'
+  );
+
+  patched = patched.replace(
+    "$('taskKind').addEventListener('change', syncFormVisibility);\n      $('dueKind').addEventListener('change', syncFormVisibility);",
+    "$('taskKind').addEventListener('change', syncFormVisibility);\n      $('startKind').addEventListener('change', syncFormVisibility);\n      $('dueKind').addEventListener('change', syncFormVisibility);"
   );
 
   patched = patched.replace(
@@ -272,11 +417,13 @@ function patchIndex(html) {
     .icon-tool { min-width: 44px; font-size: 21px; line-height: 1; padding: 5px 8px; }
     .bottom-add { font-size: 26px; font-weight: 950; min-height: 54px; }
     .bottom-ai { min-width: 74px; font-size: 21px; font-weight: 950; min-height: 54px; background: #fff; }
-    .list-card, #dueTasks, #anytimeVisible, #anytimeFolded, #doneTasks, .task-list { width: 100%; }
+    .list-card, #dueTasks, #anytimeVisible, #anytimeFolded, #doneTasks, #futureTasks, .task-list { width: 100%; }
     .task { width: 100%; }
     #dueTasks:not(:empty) + #anytimeVisible:not(:empty) { margin-top: 12px; }
+    #futureWrap { margin-top: 8px; }
     .task:has(.task-due) { border-color: rgba(219, 93, 130, .62); background: linear-gradient(180deg, #fff4f7, #fff8ed); }
     .task:has(.task-due) .task-due { color: #c14667; }
+    .task-start { color: #6d5f91; font-size: 12px; font-weight: 850; margin-top: 2px; line-height: 1.15; }
     .task.recommended:not(.done) { border-color: rgba(247, 201, 72, .78); background: linear-gradient(180deg, #fffbe8, #fff8ed); }
     .confirm-list { display: grid; gap: 7px; margin: 10px 0; max-height: 45vh; overflow: auto; }
     .confirm-item { padding: 9px 10px; border-radius: 13px; border: 1px solid var(--line); background: #fff; font-weight: 800; }
@@ -286,7 +433,7 @@ function patchIndex(html) {
     @media (max-width: 390px) { .consume-top { padding: 8px 8px; } .convert-top { padding: 8px 10px; } .bottom-ai { min-width: 70px; } }
   `;
 
-  if (!patched.includes('.confirm-list {')) {
+  if (!patched.includes('#futureWrap {')) {
     patched = patched.replace('</style>', `${patchCss}\n  </style>`);
   }
 
