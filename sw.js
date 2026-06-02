@@ -1,11 +1,17 @@
-const CACHE_NAME = 'hanamaru-fuda-v12';
+const CACHE_NAME = 'hanamaru-fuda-v13';
 const APP_SHELL = [
   './',
   './index.html',
   './consume.html',
+  './app-enhance.js',
   './manifest.json',
   './icon.svg'
 ];
+
+function injectEnhance(html) {
+  if (!html || html.includes('app-enhance.js')) return html;
+  return html.replace('</body>', '<script src="./app-enhance.js"></script>\n</body>');
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -27,8 +33,22 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const request = event.request;
+  const url = new URL(request.url);
   const isNavigation = request.mode === 'navigate';
   const isHtml = request.headers.get('accept')?.includes('text/html');
+  const isIndex = url.pathname.endsWith('/') || url.pathname.endsWith('/index.html');
+
+  if ((isNavigation || isHtml) && isIndex) {
+    event.respondWith(
+      fetch(request).then((response) => response.text()).then((html) => {
+        const injected = injectEnhance(html);
+        const wrapped = new Response(injected, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', wrapped.clone()));
+        return wrapped;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   if (isNavigation || isHtml) {
     event.respondWith(
