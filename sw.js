@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanamaru-fuda-v13';
+const CACHE_NAME = 'hanamaru-fuda-v14';
 const APP_SHELL = [
   './',
   './index.html',
