@@ -1,9 +1,9 @@
-const CACHE_NAME = 'hanamaru-fuda-v16';
+const CACHE_NAME = 'hanamaru-fuda-v17';
 const APP_SHELL = [
   './',
   './index.html',
   './consume.html',
-  './app-enhance.js?v=16',
+  './app-enhance.js?v=17',
   './recurrence.js?v=16',
   './manifest.json',
   './icon.svg'
