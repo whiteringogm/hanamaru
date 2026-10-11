@@ -1,0 +1,96 @@
+const { chromium } = require('playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const http = require('node:http');
+const assert = require('node:assert/strict');
+const root = path.resolve(__dirname, '..');
+const server = http.createServer((req, res) => {
+  const file = path.join(root, new URL(req.url, 'http://localhost').pathname.replace(/^\//, '') || 'index.html');
+  if (!file.startsWith(root + path.sep)) { res.writeHead(403).end(); return; }
+  try { res.setHeader('Content-Type', ({ '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml' })[path.extname(file)] || 'text/plain'); res.end(fs.readFileSync(file)); }
+  catch { res.writeHead(404).end(); }
+});
+(async () => {
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const context = await browser.newContext({ viewport: { width: 375, height: 667 }, timezoneId: 'Asia/Tokyo', serviceWorkers: 'block' });
+    const page = await context.newPage();
+    const errors = []; page.on('pageerror', e => errors.push(e.message));
+    await page.clock.install({ time: new Date('2026-10-11T09:00:00+09:00') });
+    const url = `http://127.0.0.1:${server.address().port}/`;
+    await page.goto(url);
+    await page.getByRole('button', { name: '札を貼る', exact: true }).click();
+    await page.locator('#taskTitle').fill('定期掃除');
+    await page.locator('#taskKind').selectOption('repeat');
+    await page.locator('#repeatInterval').fill('3');
+    await page.locator('#repeatEvery').selectOption('week');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await page.getByText('定期掃除', { exact: true }).click();
+    let data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks[0].nextOccurrenceDate, '2026-11-01');
+    await page.getByRole('button', { name: '変換 1', exact: true }).click();
+    await page.locator('#confirmConvertYes').click();
+    await page.locator('[data-close="outputModal"]').click();
+    assert.equal(await page.locator('#stampTotal').innerText(), '1');
+    await page.reload();
+    assert.equal(await page.locator('#stampTotal').innerText(), '1');
+    assert.match(await page.locator('#doneTasks').innerText(), /次回 2026-11-01から/);
+    await page.getByRole('button', { name: '札を貼る', exact: true }).click();
+    await page.locator('#taskTitle').fill('家計簿登録');
+    await page.locator('#taskKind').selectOption('monthly');
+    await page.locator('#monthlyDay').fill('5');
+    await page.locator('#monthlyOffset').selectOption('-1');
+    await page.locator('#monthlyStart').fill('2026-08-01');
+    await page.screenshot({ path: path.resolve(__dirname, '../../work/hanamaru-monthly-form.png'), fullPage: true });
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.monthlySchedules.length, 1);
+    assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 3);
+    assert.equal(await page.locator('#anytimeVisible > details').count(), 1);
+    await page.locator('#anytimeVisible summary').click();
+    assert.match(await page.locator('#anytimeVisible').innerText(), /2026年7月分/);
+    await page.screenshot({ path: path.resolve(__dirname, '../../work/hanamaru-monthly-list.png'), fullPage: true });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.getByText('家計簿登録 2026年7月分', { exact: true }).click();
+    await page.locator('#convertBtn').click();
+    await page.locator('#confirmConvertYes').click();
+    await page.locator('[data-close="outputModal"]').click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 2);
+    await page.locator('#undoBtn').click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 3);
+    assert.equal(data.tasks.find(t => t.occurrenceMonth === '2026-08').completed, true);
+    await page.locator('#convertBtn').click(); await page.locator('#confirmConvertYes').click(); await page.locator('[data-close="outputModal"]').click();
+    await page.reload();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 2);
+    // Editing an existing schedule updates future and unfinished cards.
+    await page.locator('#openSettings').click();
+    await page.locator('#monthlyScheduleList').getByRole('button', { name: '編集', exact: true }).click();
+    await page.locator('#taskTitle').fill('家計簿入力');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert(data.tasks.filter(t => t.monthlyScheduleId).every(t => t.title.startsWith('家計簿入力')));
+    await page.clock.setSystemTime(new Date('2026-11-05T09:00:00+09:00'));
+    await page.reload();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 3);
+    assert.equal(data.tasks.find(t => t.title === '定期掃除').completed, false);
+    await page.locator('#openSettings').click();
+    await page.locator('#monthlyScheduleList').getByRole('button', { name: '今後の発生を停止' }).click();
+    await page.locator('[data-close="settingsModal"]').click();
+    await page.clock.setSystemTime(new Date('2027-02-06T09:00:00+09:00'));
+    await page.reload();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 3);
+    await page.locator('#openSettings').click();
+    await page.locator('#monthlyScheduleList').getByRole('button', { name: '今月から再開' }).click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 4);
+    assert.equal(data.tasks.some(t => t.occurrenceMonth === '2026-12'), false);
+    assert.deepEqual(errors, []);
+    console.log('Browser checks passed: 375px mobile, repeat completion/conversion/reload, monthly catch-up/grouping/edit/undo/pause/resume, no horizontal overflow or runtime errors.');
+  } finally { await browser.close(); server.close(); }
+})().catch(e => { console.error(e); server.close(); process.exitCode = 1; });

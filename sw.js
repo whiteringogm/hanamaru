@@ -1,9 +1,10 @@
-const CACHE_NAME = 'hanamaru-fuda-v15';
+const CACHE_NAME = 'hanamaru-fuda-v16';
 const APP_SHELL = [
   './',
   './index.html',
   './consume.html',
-  './app-enhance.js',
+  './app-enhance.js?v=16',
+  './recurrence.js?v=16',
   './manifest.json',
   './icon.svg'
 ];
@@ -72,3 +73,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
