@@ -393,9 +393,12 @@
         const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(OLD_STORAGE_KEY);
         if (!raw) return defaultState();
         const source = JSON.parse(raw);
-        if ((Number(source.version) || 0) < 4 && !localStorage.getItem('hanamaru-before-v16')) localStorage.setItem('hanamaru-before-v16', raw);
         const parsed = normalizeState(source);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        // A full storage area must never turn valid existing data into an empty state.
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (error) { console.warn(error); }
+        try {
+          if ((Number(source.version) || 0) < 4 && !localStorage.getItem('hanamaru-before-v16')) localStorage.setItem('hanamaru-before-v16', raw);
+        } catch (error) { console.warn('Migration backup could not be saved.', error); }
         return parsed;
       } catch (error) {
         console.warn(error);

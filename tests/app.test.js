@@ -6,7 +6,7 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1].split("    if ('serviceWorker' in navigator)")[0];
 const recurrence = fs.readFileSync(path.join(__dirname, '../recurrence.js'), 'utf8');
-function app(initial) {
+function app(initial, failBackup = false) {
   const memory = new Map(initial ? [['hanamaru-fuda-v2', JSON.stringify(initial)]] : []);
   const elements = new Map();
   let now = new Date('2026-10-11T09:00:00+09:00').getTime();
@@ -14,7 +14,10 @@ function app(initial) {
   const context = vm.createContext({ Date: Clock, console, document: { getElementById(id) {
     if (!elements.has(id)) elements.set(id, { value: '', disabled: false });
     return elements.get(id);
-  } }, localStorage: { getItem: key => memory.get(key) || null, setItem: (key, value) => memory.set(key, value) },
+  } }, localStorage: { getItem: key => memory.get(key) || null, setItem: (key, value) => {
+    if (failBackup && key === 'hanamaru-before-v16') throw new Error('Storage quota');
+    memory.set(key, value);
+  } },
   confirm: () => true, setTimeout: () => 0, clearTimeout: () => {} });
   vm.runInContext(recurrence, context); vm.runInContext(script, context);
   vm.runInContext("render = () => { applyRepeatReset(); save(); }; toast = () => {}; showPage = () => {}; showStamp = () => {}; showOutput = () => {}; confirmConversion = async () => true;", context);
@@ -117,4 +120,10 @@ test('deleting one month does not stop or duplicate its monthly schedule', () =>
   assert.equal(a.read().tasks.length, 2);
   assert.equal(a.read().monthlySchedules[0].active, true);
   a.date('2026-11-05T09:00:00+09:00'); a.run('render()'); assert.equal(a.read().tasks.length, 3);
+});
+
+test('a failed optional migration backup does not replace existing data with defaults', () => {
+  const a = app({ version: 3, totalStamps: 19, tasks: [{ id: 'saved', title: '保存済みの札' }] }, true);
+  assert.equal(a.read().totalStamps, 19);
+  assert.equal(a.read().tasks[0].id, 'saved');
 });
