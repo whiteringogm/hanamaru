@@ -1,0 +1,27 @@
+name: Recurrence checks
+on:
+  push:
+    branches: [main, codex/recurrence-v16]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Tokyo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Date, migration and application tests
+        run: node --test tests/*.test.js
+      - name: Install browser test tools
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Browser interaction checks
+        run: |
+          mkdir -p ../work
+          node tests/browser.cjs

@@ -195,10 +195,12 @@
         </div>
         <form class="controls" id="taskForm">
           <input id="taskId" type="hidden" />
+          <input id="monthlyScheduleId" type="hidden" />
           <label>札の名前</label>
           <input id="taskTitle" type="text" placeholder="例：キーケースのお金補充" autocomplete="off" required />
           <label>カテゴリ</label>
           <select id="taskCategory"></select>
+          <div id="startFields" class="controls">
           <label>開始</label>
           <div class="row wrap">
             <select id="startKind" class="grow" aria-label="開始">
@@ -207,20 +209,36 @@
             </select>
             <input id="startDate" class="grow hidden" type="date" aria-label="開始日" />
           </div>
+          </div>
           <label>種類</label>
           <select id="taskKind">
             <option value="single">単発系</option>
-            <option value="repeat">繰り返し系</option>
+            <option value="repeat">定期（完了日から数える）</option>
+            <option value="monthly">月次（毎月別の札）</option>
           </select>
           <div id="repeatFields" class="row wrap hidden">
             <input id="repeatInterval" class="grow" type="number" min="1" max="999" inputmode="numeric" aria-label="繰り返し間隔" />
             <select id="repeatEvery" class="grow" aria-label="繰り返し単位">
-              <option value="day">日ごと</option>
-              <option value="week">週ごと</option>
-              <option value="month">月ごと</option>
-              <option value="year">年ごと</option>
+              <option value="day">日後</option>
+              <option value="week">週間後</option>
+              <option value="month">か月後</option>
+              <option value="year">年後</option>
             </select>
           </div>
+          <div id="monthlyFields" class="controls hidden">
+            <label for="monthlyDay">毎月何日から発生するか</label>
+            <input id="monthlyDay" type="number" min="1" max="31" value="1" inputmode="numeric" />
+            <label for="monthlyOffset">何月分の札にするか</label>
+            <select id="monthlyOffset">
+              <option value="0">当月分</option>
+              <option value="-1">前月分（例：８月に７月分を発生）</option>
+            </select>
+            <label for="monthlyStart">この日以降から発生させる</label>
+            <input id="monthlyStart" type="date" />
+            <p class="subtext">名前は「家計簿登録」のように月を除いて入力。年と月は自動で付く。指定日がない月は月末に発生する。</p>
+            <p class="subtext" id="monthlyEditHint">同じ月次札の未完了分と今後の設定を編集する。発生停止は設定から。</p>
+          </div>
+          <div id="dueFields" class="controls">
           <label>期限</label>
           <div class="row wrap">
             <select id="dueKind" class="grow" aria-label="期限">
@@ -228,6 +246,7 @@
               <option value="dated">期限あり</option>
             </select>
             <input id="dueDate" class="grow hidden" type="date" aria-label="期限日" />
+          </div>
           </div>
           <button class="btn primary" type="submit">保存</button>
         </form>
@@ -263,6 +282,10 @@
         <input id="resetHour" type="time" />
         <button class="btn primary" id="saveSettings" type="button">設定保存</button>
         <div class="splitline"></div>
+        <h3>月次札の設定</h3>
+        <div id="monthlyScheduleList" class="controls"></div>
+        <div class="splitline"></div>
+        <p class="subtext">花丸札 v16</p>
         <label>JSONバックアップ</label>
         <button class="btn" id="exportJson" type="button">書き出し</button>
         <textarea id="jsonBox" placeholder="ここにJSONを貼って読み込み"></textarea>
@@ -338,6 +361,7 @@
   <div class="stamp-pop" id="stampPop" aria-hidden="true"><span>花丸</span></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="./recurrence.js?v=16"></script>
   <script>
     const STORAGE_KEY = 'hanamaru-fuda-v2';
     const OLD_STORAGE_KEY = 'hanamaru-fuda-v1';
@@ -347,10 +371,12 @@
     let currentCategory = state.categories[0] || '生活';
     let lastUndo = null;
     let lastConvertedItems = [];
+    let renderedDay = '';
 
     function defaultState() {
       return {
-        version: 3,
+        version: 4,
+        monthlySchedules: [],
         categories: ['生活', '創作'],
         tasks: [],
         totalStamps: 0,
@@ -366,8 +392,13 @@
       try {
         const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(OLD_STORAGE_KEY);
         if (!raw) return defaultState();
-        const parsed = normalizeState(JSON.parse(raw));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        const source = JSON.parse(raw);
+        const parsed = normalizeState(source);
+        // A full storage area must never turn valid existing data into an empty state.
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (error) { console.warn(error); }
+        try {
+          if ((Number(source.version) || 0) < 4 && !localStorage.getItem('hanamaru-before-v16')) localStorage.setItem('hanamaru-before-v16', raw);
+        } catch (error) { console.warn('Migration backup could not be saved.', error); }
         return parsed;
       } catch (error) {
         console.warn(error);
@@ -378,7 +409,8 @@
     function normalizeState(input) {
       const base = defaultState();
       const merged = { ...base, ...input, settings: { ...base.settings, ...(input && input.settings ? input.settings : {}) } };
-      merged.version = 3;
+      merged.version = 4;
+      merged.monthlySchedules = Array.isArray(merged.monthlySchedules) ? merged.monthlySchedules.map(s => HanamaruRecurrence.normalizeSchedule(s, todayISO())).filter(Boolean) : [];
       merged.categories = Array.isArray(merged.categories) && merged.categories.length ? uniqueClean(merged.categories) : base.categories;
       merged.tasks = Array.isArray(merged.tasks) ? merged.tasks.map(normalizeTask).filter(Boolean) : [];
       merged.totalStamps = Number.isFinite(Number(merged.totalStamps)) ? Number(merged.totalStamps) : 0;
@@ -406,6 +438,12 @@
         kind,
         repeatEvery,
         repeatInterval,
+        repeatSchema: task.repeatSchema || 0,
+        repeatCycle: task.repeatCycle || 0,
+        nextOccurrenceDate: task.nextOccurrenceDate || '',
+        repeatArchive: Boolean(task.repeatArchive),
+        monthlyScheduleId: task.monthlyScheduleId || '',
+        occurrenceMonth: task.occurrenceMonth || '',
         startKind,
         startDate,
         dueKind,
@@ -459,76 +497,17 @@
     function monthOrdinal(date) { return date.getFullYear() * 12 + date.getMonth(); }
     function lastDayOfMonth(year, monthIndex) { return new Date(year, monthIndex + 1, 0).getDate(); }
 
-    function periodKey(task, date = nowShiftedDate()) {
-      const interval = Math.max(1, Number(task.repeatInterval) || 1);
-      if (task.repeatEvery === 'day') return `day:${interval}:${Math.floor(dayOrdinal(date) / interval)}`;
-      if (task.repeatEvery === 'week') return `week:${interval}:${Math.floor(Math.floor((dayOrdinal(date) + 3) / 7) / interval)}`;
-      if (task.repeatEvery === 'month') return `month:${interval}:${Math.floor(monthOrdinal(date) / interval)}`;
-      return `year:${interval}:${Math.floor(date.getFullYear() / interval)}`;
+    function periodKey(task) {
+      return task.activePeriodKey || `completion:${task.id}:${task.repeatCycle || 0}`;
     }
+
 
     function currentDayKey() { return `day:1:${Math.floor(dayOrdinal(nowShiftedDate()))}`; }
 
-    function addRepeatIntervalDate(date, task) {
-      const n = Math.max(1, Number(task.repeatInterval) || 1);
-      const d = new Date(date.getTime());
-      if (task.repeatEvery === 'day') d.setDate(d.getDate() + n);
-      if (task.repeatEvery === 'week') d.setDate(d.getDate() + n * 7);
-      if (task.repeatEvery === 'month') {
-        const baseDay = task.dueAnchor && task.dueAnchor.day ? Number(task.dueAnchor.day) : d.getDate();
-        const targetMonth = d.getMonth() + n;
-        const targetYear = d.getFullYear() + Math.floor(targetMonth / 12);
-        const monthIndex = ((targetMonth % 12) + 12) % 12;
-        const last = lastDayOfMonth(targetYear, monthIndex);
-        const day = task.dueAnchor && task.dueAnchor.endOfMonth ? last : Math.min(baseDay, last);
-        return new Date(targetYear, monthIndex, day);
-      }
-      if (task.repeatEvery === 'year') {
-        const baseDay = task.dueAnchor && task.dueAnchor.day ? Number(task.dueAnchor.day) : d.getDate();
-        const targetYear = d.getFullYear() + n;
-        const last = lastDayOfMonth(targetYear, d.getMonth());
-        const day = task.dueAnchor && task.dueAnchor.endOfMonth ? last : Math.min(baseDay, last);
-        return new Date(targetYear, d.getMonth(), day);
-      }
-      return d;
-    }
-
-    function advanceDueDateForward(task) {
-      if (task.kind !== 'repeat' || task.dueKind !== 'dated' || !task.dueDate) return;
-      let d = parseISODate(task.dueDate);
-      const today = parseISODate(todayISO(nowShiftedDate()));
-      let guard = 0;
-      while (d < today && guard < 120) {
-        d = addRepeatIntervalDate(d, task);
-        guard += 1;
-      }
-      task.dueDate = todayISO(d);
-    }
-
     function applyRepeatReset() {
-      let changed = false;
-      state.tasks.forEach(task => {
-        if (task.kind !== 'repeat') return;
-        const key = periodKey(task);
-        if (!task.activePeriodKey) {
-          task.activePeriodKey = key;
-          changed = true;
-          return;
-        }
-        if (task.activePeriodKey !== key) {
-          const oldKey = task.activePeriodKey;
-          const wasHandled = Boolean(task.stampedPeriods && task.stampedPeriods[oldKey]);
-          if (wasHandled) advanceDueDateForward(task);
-          task.activePeriodKey = key;
-          if (!(task.stampedPeriods && task.stampedPeriods[key])) {
-            task.completed = false;
-            task.completedAt = null;
-          }
-          changed = true;
-        }
-        if (task.stampedPeriods && task.stampedPeriods[key]) task.completed = true;
-      });
-      if (changed) save();
+      const today = todayISO(nowShiftedDate());
+      HanamaruRecurrence.advanceRepeats(state, today, makeId);
+      HanamaruRecurrence.generateMonthly(state, today, normalizeTask);
     }
 
     function showPage(name) {
@@ -540,11 +519,13 @@
 
     function render() {
       applyRepeatReset();
+      renderedDay = currentDayKey();
       if (!state.categories.includes(currentCategory)) currentCategory = state.categories[0];
       $('stampTotal').textContent = state.totalStamps;
       renderTabs();
       renderCategorySelect();
       renderSettingsManage();
+      renderMonthlySchedules();
       renderTasks();
       save();
     }
@@ -636,6 +617,12 @@
         start.textContent = `開始 ${task.startDate}`;
         main.appendChild(start);
       }
+      if (task.kind === 'repeat') {
+        const info = document.createElement('div');
+        info.className = 'subtext';
+        info.textContent = task.completed && task.nextOccurrenceDate ? `次回 ${task.nextOccurrenceDate}から` : repeatHuman(task);
+        main.appendChild(info);
+      }
       const menu = document.createElement('div');
       menu.className = 'task-menu';
       const edit = document.createElement('button');
@@ -682,37 +669,54 @@
       return array;
     }
 
-    function openTaskForm(id = '') {
+    function openTaskForm(id = '', scheduleId = '') {
       const task = id ? state.tasks.find(t => t.id === id) : null;
-      $('formTitle').textContent = task ? '札を編集' : '札を貼る';
+      const schedule = state.monthlySchedules.find(s => s.id === (scheduleId || task?.monthlyScheduleId));
+      $('formTitle').textContent = schedule ? '月次札の設定' : task ? '札を編集' : '札を貼る';
       $('taskId').value = task ? task.id : '';
-      $('taskTitle').value = task ? task.title : '';
-      $('taskCategory').value = task ? task.category : currentCategory;
+      $('monthlyScheduleId').value = schedule ? schedule.id : '';
+      $('taskTitle').value = schedule ? schedule.title : task ? task.title : '';
+      $('taskCategory').value = schedule ? schedule.category : task ? task.category : currentCategory;
       $('startKind').value = task ? (task.startKind || 'now') : 'now';
       $('startDate').value = task && task.startDate ? task.startDate : todayISO();
-      $('taskKind').value = task ? task.kind : 'single';
+      $('taskKind').value = schedule ? 'monthly' : task ? task.kind : 'single';
+      $('taskKind').disabled = Boolean(schedule);
       $('repeatInterval').value = task ? task.repeatInterval : 1;
       $('repeatEvery').value = task ? task.repeatEvery : 'day';
       $('dueKind').value = task ? task.dueKind : 'anytime';
       $('dueDate').value = task && task.dueDate ? task.dueDate : todayISO();
+      $('monthlyDay').value = schedule ? schedule.day : 1;
+      $('monthlyOffset').value = schedule ? schedule.monthOffset : 0;
+      $('monthlyStart').value = schedule ? schedule.startDate : task?.dueDate || task?.startDate || todayISO().slice(0, 7) + '-01';
+      $('monthlyStart').disabled = Boolean(schedule);
+      $('monthlyEditHint').classList.toggle('hidden', !schedule);
       syncFormVisibility();
       showPage('edit');
     }
 
+
     function syncFormVisibility() {
+      const monthly = $('taskKind').value === 'monthly';
       $('repeatFields').classList.toggle('hidden', $('taskKind').value !== 'repeat');
+      $('monthlyFields').classList.toggle('hidden', !monthly);
+      $('startFields').classList.toggle('hidden', monthly);
+      $('dueFields').classList.toggle('hidden', monthly);
       $('startDate').classList.toggle('hidden', $('startKind').value !== 'dated');
       $('dueDate').classList.toggle('hidden', $('dueKind').value !== 'dated');
+      $('monthlyStart').required = monthly;
     }
+
 
     function saveTaskFromForm(event) {
       event.preventDefault();
       const id = $('taskId').value;
       const title = $('taskTitle').value.trim();
       if (!title) return;
+      if ($('taskKind').value === 'monthly') { saveMonthlyFromForm(id, title); return; }
+      const index = state.tasks.findIndex(t => t.id === id);
+      const old = index >= 0 ? state.tasks[index] : null;
       const data = normalizeTask({
-        id: id || makeId(),
-        title,
+        ...(old || {}), id: id || makeId(), title,
         category: $('taskCategory').value || currentCategory,
         startKind: $('startKind').value,
         startDate: $('startKind').value === 'dated' ? ($('startDate').value || todayISO()) : '',
@@ -720,27 +724,23 @@
         repeatInterval: $('repeatInterval').value,
         repeatEvery: $('repeatEvery').value,
         dueKind: $('dueKind').value,
-        dueDate: $('dueKind').value === 'dated' ? ($('dueDate').value || todayISO()) : '',
-        createdAt: new Date().toISOString()
+        dueDate: $('dueKind').value === 'dated' ? ($('dueDate').value || todayISO()) : ''
       });
-      data.activePeriodKey = data.kind === 'repeat' ? periodKey(data) : null;
-      const index = state.tasks.findIndex(t => t.id === id);
-      if (index >= 0) {
-        data.createdAt = state.tasks[index].createdAt;
-        data.sortOrder = data.dueKind === 'anytime' ? Date.now() : (state.tasks[index].sortOrder || 0);
-        data.completed = state.tasks[index].completed;
-        data.completedAt = state.tasks[index].completedAt;
-        data.stampedPeriods = state.tasks[index].stampedPeriods || {};
-        if (data.kind !== state.tasks[index].kind || data.repeatEvery !== state.tasks[index].repeatEvery || data.repeatInterval !== state.tasks[index].repeatInterval) {
-          data.completed = false;
-          data.completedAt = null;
-          data.stampedPeriods = {};
-        }
-        state.tasks[index] = data;
-      } else {
-        data.sortOrder = data.dueKind === 'anytime' ? Date.now() : 0;
-        state.tasks.push(data);
+      data.sortOrder = data.dueKind === 'anytime' ? Date.now() : (old?.sortOrder || 0);
+      data.repeatSchema = 1;
+      data.activePeriodKey = periodKey(data);
+      if (data.kind === 'repeat' && data.completed && data.completedAt) {
+        data.nextOccurrenceDate = HanamaruRecurrence.nextDate(todayISO(new Date(data.completedAt)), data);
       }
+      if (old && data.kind !== old.kind) {
+        data.completed = false;
+        data.completedAt = null;
+        data.nextOccurrenceDate = '';
+        data.stampedPeriods = {};
+        data.repeatCycle += 1;
+        data.activePeriodKey = `completion:${data.id}:${data.repeatCycle}`;
+      }
+      if (index >= 0) state.tasks[index] = data; else state.tasks.push(data);
       currentCategory = data.category;
       save();
       showPage('list');
@@ -748,21 +748,112 @@
       toast(index >= 0 ? '札を編集した。' : '札を貼った。');
     }
 
+    function saveMonthlyFromForm(taskId, title) {
+      const scheduleId = $('monthlyScheduleId').value;
+      let schedule = state.monthlySchedules.find(s => s.id === scheduleId);
+      const old = state.tasks.find(t => t.id === taskId);
+      const values = {
+        id: schedule ? schedule.id : makeId(), title,
+        category: $('taskCategory').value || currentCategory,
+        day: $('monthlyDay').value, monthOffset: $('monthlyOffset').value,
+        startDate: schedule ? schedule.startDate : $('monthlyStart').value,
+        active: schedule ? schedule.active : true,
+        lastGeneratedMonth: schedule ? schedule.lastGeneratedMonth : ''
+      };
+      const normalized = HanamaruRecurrence.normalizeSchedule(values, todayISO());
+      if (schedule) Object.assign(schedule, normalized);
+      else { schedule = normalized; state.monthlySchedules.push(schedule); }
+      // Converting an existing card adopts its original month, including its completion.
+      if (old && !scheduleId) {
+        const month = schedule.startDate.slice(0, 7);
+        const wasStamped = old.kind === 'repeat' && old.stampedPeriods?.[periodKey(old)];
+        if (wasStamped) {
+          state.tasks = state.tasks.filter(t => t.id !== old.id);
+          delete state.taskGroups?.[old.id];
+        } else {
+          old.kind = 'single';
+          old.monthlyScheduleId = schedule.id;
+          old.occurrenceMonth = month;
+          old.nextOccurrenceDate = '';
+          old.startKind = 'dated';
+          old.startDate = HanamaruRecurrence.occurrenceDate(month, schedule.day);
+          old.dueKind = 'anytime';
+          old.dueDate = '';
+        }
+        schedule.lastGeneratedMonth = month;
+      }
+      state.taskGroups = state.taskGroups || {};
+      state.tasks.filter(t => t.monthlyScheduleId === schedule.id).forEach(t => {
+        if (!t.completed || !scheduleId) {
+          t.title = HanamaruRecurrence.monthlyTitle(schedule, t.occurrenceMonth);
+          t.category = schedule.category;
+          // Already issued cards stay available when the monthly day is edited.
+        }
+        state.taskGroups[t.id] = { groupId: `monthly_${schedule.id}`, groupTitle: schedule.title };
+      });
+      currentCategory = schedule.category;
+      save();
+      showPage('list');
+      render();
+      toast('月次札の設定を保存した。');
+    }
+
+    function renderMonthlySchedules() {
+      const box = $('monthlyScheduleList');
+      box.innerHTML = '';
+      state.monthlySchedules.forEach(schedule => {
+        const row = document.createElement('div');
+        row.className = 'card controls';
+        const label = document.createElement('div');
+        label.className = 'task-title';
+        label.textContent = schedule.title;
+        const info = document.createElement('div');
+        info.className = 'subtext';
+        info.textContent = `${schedule.category} / 毎月${schedule.day}日から / ${schedule.monthOffset === -1 ? '前月分' : '当月分'}${schedule.active ? '' : ' / 発生停止中'}`;
+        const buttons = document.createElement('div');
+        buttons.className = 'row wrap';
+        const edit = document.createElement('button');
+        edit.type = 'button'; edit.className = 'btn small'; edit.textContent = '編集';
+        edit.onclick = () => { closeModal('settingsModal'); openTaskForm('', schedule.id); };
+        const pause = document.createElement('button');
+        pause.type = 'button'; pause.className = 'btn small';
+        pause.textContent = schedule.active ? '今後の発生を停止' : '今月から再開';
+        pause.onclick = () => {
+          schedule.active = !schedule.active;
+          if (schedule.active) {
+            const previous = HanamaruRecurrence.addMonths(todayISO(nowShiftedDate()).slice(0, 7) + '-01', -1).slice(0, 7);
+            if (!schedule.lastGeneratedMonth || schedule.lastGeneratedMonth < previous) schedule.lastGeneratedMonth = previous;
+          }
+          save(); render();
+        };
+        buttons.append(edit, pause); row.append(label, info, buttons); box.appendChild(row);
+      });
+      if (!state.monthlySchedules.length) box.textContent = '月次札なし。札を貼る → 種類「月次」で登録できる。';
+    }
+
+
     function toggleTask(id) {
       const task = state.tasks.find(t => t.id === id);
       if (!task) return;
       if (isFutureTask(task)) { toast('開始日前の札。まだ待機。'); return; }
+      if (task.kind === 'repeat' && task.stampedPeriods?.[periodKey(task)]) { toast('花丸に変換済み。取り消すときはUndo。'); return; }
       task.completed = !task.completed;
       task.completedAt = task.completed ? new Date().toISOString() : null;
+      if (task.kind === 'repeat') {
+        task.repeatSchema = 1;
+        task.nextOccurrenceDate = task.completed ? HanamaruRecurrence.nextDate(todayISO(new Date(task.completedAt)), task) : '';
+      }
       save();
       render();
     }
 
+
     function deleteTask(id) {
       const task = state.tasks.find(t => t.id === id);
       if (!task) return;
-      if (!confirm(`「${task.title}」を剥がして捨てる？`)) return;
+      if (!confirm(`「${task.title}」を剥がして捨てる？${task.monthlyScheduleId ? '\nこの月の札だけを削除する。毎月の発生は設定から停止できる。' : ''}`)) return;
       state.tasks = state.tasks.filter(t => t.id !== id);
+      if (state.taskGroups) delete state.taskGroups[id];
       save();
       render();
     }
@@ -789,7 +880,7 @@
           modal = document.createElement('div');
           modal.className = 'modal-backdrop';
           modal.id = 'confirmConvertModal';
-          modal.innerHTML = `<div class="modal"><div class="modal-head"><h2>花丸に変換する札</h2><button class="btn small ghost" id="confirmConvertCancelTop" type="button">閉じる</button></div><p class="subtext">完了札を確認。変換すると単発は消え、繰り返しはこの周期で花丸化済みになる。</p><div class="confirm-list" id="confirmConvertList"></div><div class="row wrap"><button class="btn primary" id="confirmConvertYes" type="button">変換</button><button class="btn" id="confirmConvertNo" type="button">キャンセル</button></div></div>`;
+          modal.innerHTML = `<div class="modal"><div class="modal-head"><h2>花丸に変換する札</h2><button class="btn small ghost" id="confirmConvertCancelTop" type="button">閉じる</button></div><p class="subtext">完了札を確認。変換すると単発は消え、定期札は完了日から次回を待つ。</p><div class="confirm-list" id="confirmConvertList"></div><div class="row wrap"><button class="btn primary" id="confirmConvertYes" type="button">変換</button><button class="btn" id="confirmConvertNo" type="button">キャンセル</button></div></div>`;
           document.body.appendChild(modal);
           modal.addEventListener('click', event => { if (event.target === modal) modal.classList.remove('show'); });
         }
@@ -1081,9 +1172,10 @@
 
     function repeatHuman(task) {
       const n = Math.max(1, Number(task.repeatInterval) || 1);
-      const unit = { day: '日', week: '週', month: '月', year: '年' }[task.repeatEvery] || '日';
-      return n === 1 ? `${unit}ごと` : `${n}${unit}ごと`;
+      const unit = { day: '日', week: '週間', month: 'か月', year: '年' }[task.repeatEvery] || '日';
+      return `完了から${n}${unit}後`;
     }
+
 
     function importAiTasks() {
       const tasks = previewAiTasks();
@@ -1147,6 +1239,13 @@
     if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.warn));
     bindEvents();
     render();
+    function refreshCalendar() {
+      if (!document.hidden && $('editPage').classList.contains('hidden') && !document.querySelector('.modal-backdrop.show') && currentDayKey() !== renderedDay) render();
+    }
+    document.addEventListener('visibilitychange', refreshCalendar);
+    setInterval(refreshCalendar, 60000);
   </script>
+  <script src="./app-enhance.js?v=16"></script>
 </body>
 </html>
+
