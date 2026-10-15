@@ -155,3 +155,38 @@ test('deleting a monthly schedule and its cards preserves unrelated tasks and ea
   assert.equal(a.read().conversionHistory[0].id, 'saved');
   assert.equal(a.run('lastUndo'), null);
 });
+
+test('an early repeat revival retains earned stamps and schedules from the new completion', async () => {
+  const a = app(); addRepeat(a); a.run('toggleTask(state.tasks[0].id)'); await a.run('convertCompleted()');
+  const oldKey = a.read().tasks[0].activePeriodKey;
+  a.date('2026-10-15T21:00:00+09:00');
+  a.run('reviveRepeatTask(state.tasks[0].id)');
+  assert.equal(a.read().totalStamps, 1);
+  assert.equal(a.read().conversionHistory.length, 1);
+  assert.equal(a.read().tasks[0].completed, false);
+  assert.equal(a.read().tasks[0].nextOccurrenceDate, '');
+  assert(a.read().tasks[0].stampedPeriods[oldKey]);
+  a.run('reviveRepeatTask(state.tasks[0].id)');
+  assert.equal(a.read().tasks.length, 1);
+  a.run('toggleTask(state.tasks[0].id)');
+  assert.equal(a.read().tasks[0].nextOccurrenceDate, '2026-11-05');
+  await a.run('convertCompleted()');
+  assert.equal(a.read().totalStamps, 2);
+  await a.run('convertCompleted()');
+  assert.equal(a.read().totalStamps, 2);
+});
+
+test('revival retains an unconverted completion and also unlocks a future-start repeat', async () => {
+  const a = app(); addRepeat(a); a.run('toggleTask(state.tasks[0].id)');
+  a.run('reviveRepeatTask(state.tasks[0].id)');
+  assert.equal(a.read().tasks.length, 2);
+  assert.equal(a.read().tasks[1].completed, true);
+  assert.equal(a.read().tasks[1].kind, 'single');
+  assert.equal(a.read().tasks[0].completed, false);
+  await a.run('convertCompleted()');
+  assert.equal(a.read().totalStamps, 1);
+  a.run('state.tasks[0].startKind = "dated"; state.tasks[0].startDate = "2026-12-01";');
+  a.run('reviveRepeatTask(state.tasks[0].id)');
+  assert.equal(a.run('isFutureTask(state.tasks[0])'), false);
+  assert.equal(a.read().totalStamps, 1);
+});

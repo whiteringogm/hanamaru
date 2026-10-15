@@ -249,6 +249,8 @@
           </div>
           </div>
           <button class="btn primary" type="submit">保存</button>
+          <button class="btn hidden" id="reviveFromEdit" type="button">今すぐ復活</button>
+          <p class="subtext hidden" id="reviveHint">前回の花丸を残して未完了に戻す。次回は今回の完了日から数える。</p>
           <button class="btn danger hidden" id="deleteFromEdit" type="button">この札を削除</button>
         </form>
       </section>
@@ -286,7 +288,7 @@
         <h3>月次札の設定</h3>
         <div id="monthlyScheduleList" class="controls"></div>
         <div class="splitline"></div>
-        <p class="subtext">花丸札 v18</p>
+        <p class="subtext">花丸札 v19</p>
         <label>JSONバックアップ</label>
         <button class="btn" id="exportJson" type="button">書き出し</button>
         <textarea id="jsonBox" placeholder="ここにJSONを貼って読み込み"></textarea>
@@ -693,6 +695,9 @@
       $('monthlyEditHint').classList.toggle('hidden', !schedule);
       $('deleteFromEdit').classList.toggle('hidden', !task && !schedule);
       $('deleteFromEdit').textContent = schedule ? 'この月次設定を削除' : 'この札を削除';
+      const canRevive = Boolean(task && !schedule && task.kind === 'repeat' && (task.completed || isFutureTask(task)));
+      $('reviveFromEdit').classList.toggle('hidden', !canRevive);
+      $('reviveHint').classList.toggle('hidden', !canRevive);
       syncFormVisibility();
       showPage('edit');
     }
@@ -853,6 +858,37 @@
       render();
     }
 
+
+    function reviveRepeatTask(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task || task.kind !== 'repeat' || (!task.completed && !isFutureTask(task))) return;
+      if (task.completed && !task.stampedPeriods?.[periodKey(task)]) {
+        const archive = normalizeTask({
+          ...task, id: makeId(), kind: 'single', repeatArchive: true,
+          nextOccurrenceDate: '', startKind: 'now', startDate: ''
+        });
+        state.tasks.push(archive);
+        if (state.taskGroups?.[task.id]) state.taskGroups[archive.id] = { ...state.taskGroups[task.id] };
+      }
+      task.completed = false;
+      task.completedAt = null;
+      task.nextOccurrenceDate = '';
+      task.startKind = 'now';
+      task.startDate = '';
+      if (task.dueKind === 'dated') task.dueDate = todayISO(nowShiftedDate());
+      task.repeatSchema = 1;
+      task.repeatCycle = (Number(task.repeatCycle) || 0) + 1;
+      task.activePeriodKey = `completion:${task.id}:${task.repeatCycle}`;
+      task.sortOrder = Date.now();
+      currentCategory = task.category;
+      // An older whole-state Undo must not erase this new occurrence.
+      lastUndo = null;
+      $('undoBtn').disabled = true;
+      save();
+      showPage('list');
+      render();
+      toast('定期札を復活させた。次回は今回の完了日から数える。');
+    }
 
     function deleteTask(id) {
       const task = state.tasks.find(t => t.id === id);
@@ -1273,6 +1309,7 @@
       $('cancelEdit').addEventListener('click', () => showPage('list'));
       $('taskForm').addEventListener('submit', saveTaskFromForm);
       $('deleteFromEdit').addEventListener('click', deleteFromEdit);
+      $('reviveFromEdit').addEventListener('click', () => reviveRepeatTask($('taskId').value));
       $('taskKind').addEventListener('change', syncFormVisibility);
       $('startKind').addEventListener('change', syncFormVisibility);
       $('dueKind').addEventListener('change', syncFormVisibility);
