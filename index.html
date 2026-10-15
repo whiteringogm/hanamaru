@@ -249,6 +249,7 @@
           </div>
           </div>
           <button class="btn primary" type="submit">保存</button>
+          <button class="btn danger hidden" id="deleteFromEdit" type="button">この札を削除</button>
         </form>
       </section>
     </main>
@@ -285,7 +286,7 @@
         <h3>月次札の設定</h3>
         <div id="monthlyScheduleList" class="controls"></div>
         <div class="splitline"></div>
-        <p class="subtext">花丸札 v17</p>
+        <p class="subtext">花丸札 v18</p>
         <label>JSONバックアップ</label>
         <button class="btn" id="exportJson" type="button">書き出し</button>
         <textarea id="jsonBox" placeholder="ここにJSONを貼って読み込み"></textarea>
@@ -690,6 +691,8 @@
       $('monthlyStart').value = schedule ? schedule.startDate : task?.dueDate || task?.startDate || todayISO().slice(0, 7) + '-01';
       $('monthlyStart').disabled = Boolean(schedule);
       $('monthlyEditHint').classList.toggle('hidden', !schedule);
+      $('deleteFromEdit').classList.toggle('hidden', !task && !schedule);
+      $('deleteFromEdit').textContent = schedule ? 'この月次設定を削除' : 'この札を削除';
       syncFormVisibility();
       showPage('edit');
     }
@@ -826,7 +829,10 @@
           }
           save(); render();
         };
-        buttons.append(edit, pause); row.append(label, info, buttons); box.appendChild(row);
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'btn small danger'; del.textContent = '削除';
+        del.onclick = () => confirmDeleteMonthlySchedule(schedule.id);
+        buttons.append(edit, pause, del); row.append(label, info, buttons); box.appendChild(row);
       });
       if (!state.monthlySchedules.length) box.textContent = '月次札なし。札を貼る → 種類「月次」で登録できる。';
     }
@@ -856,6 +862,61 @@
       if (state.taskGroups) delete state.taskGroups[id];
       save();
       render();
+    }
+
+    function deleteMonthlySchedule(id, removeCards = false) {
+      if (!state.monthlySchedules.some(s => s.id === id)) return;
+      state.monthlySchedules = state.monthlySchedules.filter(s => s.id !== id);
+      const related = state.tasks.filter(t => t.monthlyScheduleId === id);
+      if (removeCards) {
+        const ids = new Set(related.map(t => t.id));
+        state.tasks = state.tasks.filter(t => !ids.has(t.id));
+        related.forEach(t => { if (state.taskGroups) delete state.taskGroups[t.id]; });
+      } else {
+        related.forEach(t => { t.monthlyScheduleId = ''; t.occurrenceMonth = ''; });
+      }
+      lastUndo = null;
+      $('undoBtn').disabled = true;
+      save();
+      showPage('list');
+      render();
+      toast(removeCards ? '月次設定と残っていた札を削除した。' : '月次設定を削除した。残っていた札はそのまま。');
+    }
+
+    function confirmDeleteMonthlySchedule(id) {
+      const schedule = state.monthlySchedules.find(s => s.id === id);
+      if (!schedule) return;
+      let modal = $('deleteMonthlyModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'deleteMonthlyModal';
+        modal.className = 'modal-backdrop';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'deleteMonthlyTitle');
+        modal.innerHTML = '<div class="modal"><div class="modal-head"><h2 id="deleteMonthlyTitle">月次設定を削除</h2></div><p id="deleteMonthlyText"></p><label class="row"><input id="deleteMonthlyCards" type="checkbox" style="width:auto;min-height:0" />残っている月別の札も削除する</label><p class="subtext">チェックを外すと、今ある札を残して毎月の発生を終了する。獲得済みの花丸と履歴は残る。</p><div class="row wrap"><button id="deleteMonthlyYes" class="btn danger" type="button">削除する</button><button id="deleteMonthlyCancel" class="btn" type="button">キャンセル</button></div></div>';
+        document.body.appendChild(modal);
+        modal.addEventListener('click', event => { if (event.target === modal) closeModal('deleteMonthlyModal'); });
+      }
+      $('deleteMonthlyText').textContent = `「${schedule.title}」の月次設定を削除する？`;
+      $('deleteMonthlyCards').checked = false;
+      $('deleteMonthlyCancel').onclick = () => closeModal('deleteMonthlyModal');
+      $('deleteMonthlyYes').onclick = () => {
+        const removeCards = $('deleteMonthlyCards').checked;
+        closeModal('deleteMonthlyModal');
+        closeModal('settingsModal');
+        deleteMonthlySchedule(id, removeCards);
+      };
+      openModal('deleteMonthlyModal');
+    }
+
+    function deleteFromEdit() {
+      const scheduleId = $('monthlyScheduleId').value;
+      if (scheduleId) { confirmDeleteMonthlySchedule(scheduleId); return; }
+      const id = $('taskId').value;
+      if (!id) return;
+      deleteTask(id);
+      if (!state.tasks.some(t => t.id === id)) showPage('list');
     }
 
     function convertibleTasks() {
@@ -1211,6 +1272,7 @@
       $('newTaskBtn').addEventListener('click', () => openTaskForm(''));
       $('cancelEdit').addEventListener('click', () => showPage('list'));
       $('taskForm').addEventListener('submit', saveTaskFromForm);
+      $('deleteFromEdit').addEventListener('click', deleteFromEdit);
       $('taskKind').addEventListener('change', syncFormVisibility);
       $('startKind').addEventListener('change', syncFormVisibility);
       $('dueKind').addEventListener('change', syncFormVisibility);

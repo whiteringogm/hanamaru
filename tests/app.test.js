@@ -127,3 +127,31 @@ test('a failed optional migration backup does not replace existing data with def
   assert.equal(a.read().totalStamps, 19);
   assert.equal(a.read().tasks[0].id, 'saved');
 });
+
+test('deleting a monthly schedule can retain its cards as independent tasks', () => {
+  const a = app(); addMonthly(a);
+  const id = a.read().monthlySchedules[0].id;
+  a.run('state.totalStamps = 8; state.conversionHistory = [{ id: "saved" }];');
+  a.run('deleteMonthlySchedule(' + JSON.stringify(id) + ', false)');
+  assert.equal(a.read().monthlySchedules.length, 0);
+  assert.equal(a.read().tasks.length, 3);
+  assert(a.read().tasks.every(t => !t.monthlyScheduleId));
+  a.date('2027-01-05T09:00:00+09:00'); a.run('render()');
+  assert.equal(a.read().tasks.length, 3);
+  assert.equal(a.read().totalStamps, 8);
+  assert.equal(a.read().conversionHistory[0].id, 'saved');
+});
+
+test('deleting a monthly schedule and its cards preserves unrelated tasks and earned stamps', () => {
+  const a = app(); addMonthly(a); addRepeat(a);
+  const id = a.read().monthlySchedules[0].id;
+  a.run('state.totalStamps = 8; state.conversionHistory = [{ id: "saved" }]; lastUndo = "stale";');
+  a.run('deleteMonthlySchedule(' + JSON.stringify(id) + ', true)');
+  assert.equal(a.read().monthlySchedules.length, 0);
+  assert.equal(a.read().tasks.length, 1);
+  assert.equal(a.read().tasks[0].title, '定期掃除');
+  assert.equal(Object.keys(a.read().taskGroups).length, 0);
+  assert.equal(a.read().totalStamps, 8);
+  assert.equal(a.read().conversionHistory[0].id, 'saved');
+  assert.equal(a.run('lastUndo'), null);
+});
