@@ -116,6 +116,29 @@ const server = http.createServer((req, res) => {
     data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
     assert.equal(data.monthlySchedules.length, 0);
     assert.equal(data.tasks.some(t => t.title.startsWith('削除確認')), false);
+    // Early revival from the edit screen retains the previous stamp.
+    await page.locator('#newTaskBtn').click();
+    await page.locator('#taskTitle').fill('臨時作業');
+    await page.locator('#taskKind').selectOption('repeat');
+    await page.locator('#repeatInterval').fill('3');
+    await page.locator('#repeatEvery').selectOption('week');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await page.getByText('臨時作業', { exact: true }).click();
+    await page.locator('#convertBtn').click();
+    await page.locator('#confirmConvertYes').click();
+    await page.locator('[data-close="outputModal"]').click();
+    const earned = await page.locator('#stampTotal').innerText();
+    await page.clock.setSystemTime(new Date('2027-02-08T09:00:00+09:00'));
+    await page.getByRole('article').filter({ hasText: '臨時作業' }).getByRole('button', { name: '編集', exact: true }).click();
+    await page.locator('#reviveFromEdit').click();
+    assert.equal(await page.locator('#stampTotal').innerText(), earned);
+    await page.getByText('臨時作業', { exact: true }).click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.tasks.find(t => t.title === '臨時作業').nextOccurrenceDate, '2027-03-01');
+    await page.locator('#convertBtn').click();
+    await page.locator('#confirmConvertYes').click();
+    await page.locator('[data-close="outputModal"]').click();
+    assert.equal(Number(await page.locator('#stampTotal').innerText()), Number(earned) + 1);
     assert.deepEqual(errors, []);
     console.log('Browser checks passed: 375px mobile, repeat completion/conversion/reload, monthly catch-up/grouping/edit/undo/pause/resume, no horizontal overflow or runtime errors.');
   } finally { await browser.close(); server.close(); }
