@@ -90,6 +90,32 @@ const server = http.createServer((req, res) => {
     data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
     assert.equal(data.tasks.filter(t => t.monthlyScheduleId).length, 4);
     assert.equal(data.tasks.some(t => t.occurrenceMonth === '2026-12'), false);
+    // Remove the schedule from its editing screen while retaining existing cards.
+    await page.locator('#monthlyScheduleList').getByRole('button', { name: '編集', exact: true }).click();
+    await page.locator('#deleteFromEdit').click();
+    await page.locator('#deleteMonthlyCancel').click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.monthlySchedules.length, 1);
+    await page.locator('#deleteFromEdit').click();
+    await page.locator('#deleteMonthlyYes').click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.monthlySchedules.length, 0);
+    assert.equal(data.tasks.filter(t => t.title.startsWith('家計簿入力')).length, 4);
+    assert.equal(data.tasks.some(t => t.monthlyScheduleId), false);
+    // Remove another schedule together with its cards from settings.
+    await page.locator('#newTaskBtn').click();
+    await page.locator('#taskTitle').fill('削除確認');
+    await page.locator('#taskKind').selectOption('monthly');
+    await page.locator('#monthlyDay').fill('1');
+    await page.locator('#monthlyStart').fill('2027-02-01');
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await page.locator('#openSettings').click();
+    await page.locator('#monthlyScheduleList').getByRole('button', { name: '削除', exact: true }).click();
+    await page.locator('#deleteMonthlyCards').check();
+    await page.locator('#deleteMonthlyYes').click();
+    data = await page.evaluate(() => JSON.parse(localStorage.getItem('hanamaru-fuda-v2')));
+    assert.equal(data.monthlySchedules.length, 0);
+    assert.equal(data.tasks.some(t => t.title.startsWith('削除確認')), false);
     assert.deepEqual(errors, []);
     console.log('Browser checks passed: 375px mobile, repeat completion/conversion/reload, monthly catch-up/grouping/edit/undo/pause/resume, no horizontal overflow or runtime errors.');
   } finally { await browser.close(); server.close(); }
